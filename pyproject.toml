@@ -17,10 +17,10 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0",
+    "pytest-cov>=6.0",
     "ruff>=0.6",
     "httpx2"
 ]
-
 [tool.setuptools.packages.find]
 where = ["src"]
 
@@ -36,3 +36,12 @@ select = ["E", "F", "I", "B", "UP"]
 testpaths = ["tests"]
 pythonpath = ["src"]
 addopts = "-ra"
+
+
+[tool.coverage.run]
+source = ["orbyntiq"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
