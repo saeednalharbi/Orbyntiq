@@ -8,7 +8,9 @@ version = "0.1.0"
 description = "Enterprise-style multi-agent AI platform"
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "pydantic-settings>=2.0,<3.0"
+]
 
 [project.optional-dependencies]
 dev = [
