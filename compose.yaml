@@ -1,0 +1,26 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: orbyntiq-api
+
+    ports:
+      - "8000:8000"
+
+    environment:
+      ORBYNTIQ_API_HOST: "0.0.0.0"
+      ORBYNTIQ_API_PORT: "8000"
+
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
