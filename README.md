@@ -8,12 +8,12 @@ Currently under active development.
 
 ## Project Structure
 
-- `src/orbyntiq/api` — API layer
-- `src/orbyntiq/core` — configuration and shared infrastructure
-- `src/orbyntiq/agents` — multi-agent components
-- `src/orbyntiq/rag` — retrieval and knowledge components
-- `src/orbyntiq/tools` — agent tools
-- `src/orbyntiq/services` — application services
-- `tests` — automated tests
-- `docs` — architecture documentation
-- `scripts` — development and maintenance utilities
+- `src/orbyntiq/api` â€” API layer
+- `src/orbyntiq/core` â€” configuration and shared infrastructure
+- `src/orbyntiq/agents` â€” multi-agent components
+- `src/orbyntiq/rag` â€” retrieval and knowledge components
+- `src/orbyntiq/tools` â€” agent tools
+- `src/orbyntiq/services` â€” application services
+- `tests` â€” automated tests
+- `docs` â€” architecture documentation
+- `scripts` â€” development and maintenance utilities
