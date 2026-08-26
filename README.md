@@ -17,3 +17,11 @@ Currently under active development.
 - `tests` — automated tests
 - `docs` — architecture documentation
 - `scripts` — development and maintenance utilities
+
+## Architecture
+
+Architecture documentation is available in:
+
+`docs/architecture.md`
+
+The project is being implemented incrementally. Planned components are documented separately from currently implemented functionality.
