@@ -1,0 +1,58 @@
+<aside class="activity">
+  <div class="activity-header">
+    <div>
+      <span class="eyebrow">RUNTIME</span>
+      <h2>Activity</h2>
+    </div>
+
+    <span
+      class="runtime-state"
+      [class.runtime-state--busy]="isLoading"
+    >
+      <span></span>
+      {{ isLoading ? 'Running' : 'Ready' }}
+    </span>
+  </div>
+
+  <section class="activity-section">
+    <span class="section-label">Model</span>
+
+    <strong class="model-name">
+      {{ model ?? 'Not used yet' }}
+    </strong>
+
+    <small>Local Ollama runtime</small>
+  </section>
+
+  <section class="activity-section">
+    <span class="section-label">Token usage</span>
+
+    <div class="metric">
+      <span>Prompt</span>
+      <strong>{{ usage?.prompt_tokens ?? 'N/A' }}</strong>
+    </div>
+
+    <div class="metric">
+      <span>Completion</span>
+      <strong>{{ usage?.completion_tokens ?? 'N/A' }}</strong>
+    </div>
+  </section>
+
+  <section class="activity-section">
+    <span class="section-label">Conversation</span>
+
+    <div class="metric">
+      <span>Messages</span>
+      <strong>{{ messageCount }}</strong>
+    </div>
+  </section>
+
+  <div class="local-card">
+    <span class="local-dot"></span>
+
+    <div>
+      <strong>Private by design</strong>
+      <small>LLM inference runs locally</small>
+    </div>
+  </div>
+</aside>

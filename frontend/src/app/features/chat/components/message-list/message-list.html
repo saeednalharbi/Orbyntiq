@@ -1,0 +1,65 @@
+<section
+  class="messages"
+  aria-label="Conversation"
+  aria-live="polite"
+>
+  @if (messages.length === 0) {
+    <div class="empty-state">
+      <div class="empty-mark">O</div>
+
+      <h2>How can Orbyntiq help?</h2>
+
+      <p>
+        Send a message to begin a conversation with
+        your local AI runtime.
+      </p>
+    </div>
+  }
+
+  @for (message of messages; track message.id) {
+    <article
+      class="message"
+      [class.message--user]="message.role === 'user'"
+      [class.message--assistant]="message.role === 'assistant'"
+    >
+      <div class="avatar">
+        {{ message.role === 'user' ? 'Y' : 'O' }}
+      </div>
+
+      <div class="message-body">
+        <div class="message-header">
+          <strong>
+            {{ message.role === 'user' ? 'You' : 'Orbyntiq' }}
+          </strong>
+
+          @if (message.model) {
+            <span>{{ message.model }}</span>
+          }
+        </div>
+
+        <p>{{ message.content }}</p>
+      </div>
+    </article>
+  }
+
+  @if (isLoading) {
+    <article class="message message--assistant">
+      <div class="avatar">O</div>
+
+      <div class="message-body">
+        <div class="message-header">
+          <strong>Orbyntiq</strong>
+        </div>
+
+        <div
+          class="thinking"
+          aria-label="Orbyntiq is generating a response"
+        >
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+    </article>
+  }
+</section>

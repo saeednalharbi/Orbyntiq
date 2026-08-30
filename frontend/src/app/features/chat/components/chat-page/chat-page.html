@@ -1,0 +1,35 @@
+@if (state$ | async; as state) {
+<div class="chat-layout">
+  <section class="conversation-panel">
+    <header class="conversation-header">
+      <div>
+        <span class="eyebrow">CONVERSATION</span>
+        <h2>Local Intelligence</h2>
+      </div>
+
+      <span class="message-count">
+        {{ state.messages.length }}
+        {{ state.messages.length === 1 ? 'message' : 'messages' }}
+      </span>
+    </header>
+
+    @if (state.error) {
+    <div class="error-banner" role="alert">
+      <span>{{ state.error }}</span>
+
+      <button type="button" aria-label="Dismiss error" (click)="clearError()">
+        &times;
+      </button>
+    </div>
+    }
+
+    <app-message-list [messages]="state.messages" [isLoading]="state.isLoading" />
+
+    <app-prompt-input [disabled]="state.isLoading" (promptSubmit)="sendPrompt($event)"
+      (conversationReset)="resetConversation()" />
+  </section>
+
+  <app-activity-panel [model]="state.lastModel" [usage]="state.lastUsage" [isLoading]="state.isLoading"
+    [messageCount]="state.messages.length" />
+</div>
+}

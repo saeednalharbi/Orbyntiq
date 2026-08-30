@@ -1,0 +1,24 @@
+<form class="prompt-form" (ngSubmit)="submitPrompt()">
+  <div class="prompt-box">
+    <textarea [(ngModel)]="prompt" name="prompt" rows="2" maxlength="20000" placeholder="Ask Orbyntiq anything..."
+      aria-label="Message Orbyntiq" [disabled]="disabled" (keydown)="handleKeydown($event)"></textarea>
+
+    <div class="prompt-actions">
+      <div class="prompt-meta">
+        <button class="reset-button" type="button" [disabled]="disabled" (click)="conversationReset.emit()">
+          New conversation
+        </button>
+
+        <span>{{ prompt.length }} / 20,000</span>
+      </div>
+
+      <button class="send-button" type="submit" [disabled]="disabled || !prompt.trim()">
+        {{ disabled ? 'Thinking...' : 'Send' }}
+      </button>
+    </div>
+  </div>
+
+  <p class="prompt-hint">
+    Enter to send &middot; Shift + Enter for a new line
+  </p>
+</form>

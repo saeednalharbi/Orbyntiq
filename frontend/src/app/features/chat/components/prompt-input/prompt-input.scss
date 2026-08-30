@@ -1,0 +1,91 @@
+.prompt-form {
+  padding: 16px 20px 18px;
+  border-top: 1px solid #202735;
+}
+
+.prompt-box {
+  padding: 12px;
+  border: 1px solid #2a3344;
+  border-radius: 13px;
+  background: #0d121b;
+  transition: border-color 0.2s ease;
+}
+
+.prompt-box:focus-within {
+  border-color: #5366d9;
+}
+
+textarea {
+  display: block;
+  width: 100%;
+  min-height: 54px;
+  max-height: 180px;
+  resize: vertical;
+  border: 0;
+  outline: 0;
+  color: #e9edf5;
+  background: transparent;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+textarea::placeholder {
+  color: #606a7c;
+}
+
+.prompt-actions {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.prompt-meta {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  color: #596477;
+  font-size: 9px;
+}
+
+.reset-button {
+  padding: 0;
+  border: 0;
+  color: #78859a;
+  background: transparent;
+  cursor: pointer;
+  font-size: 10px;
+}
+
+.reset-button:hover:not(:disabled) {
+  color: #c4ccda;
+}
+
+.send-button {
+  min-width: 76px;
+  padding: 9px 15px;
+  border: 0;
+  border-radius: 8px;
+  background: #5266ef;
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.send-button:hover:not(:disabled) {
+  background: #6073f5;
+}
+
+.send-button:disabled,
+.reset-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.prompt-hint {
+  margin: 8px 2px 0;
+  color: #535d6f;
+  font-size: 9px;
+}

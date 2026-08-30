@@ -1,0 +1,113 @@
+:host {
+  display: block;
+}
+
+.activity {
+  height: 100%;
+  padding: 22px;
+  border: 1px solid #202735;
+  border-radius: 16px;
+  background: #0d121b;
+}
+
+.activity-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #202735;
+}
+
+.activity-header h2 {
+  margin: 4px 0 0;
+  font-size: 16px;
+}
+
+.eyebrow,
+.section-label {
+  color: #657186;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.runtime-state {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding: 6px 8px;
+  border: 1px solid #273143;
+  border-radius: 7px;
+  color: #8490a3;
+  font-size: 9px;
+}
+
+.runtime-state span,
+.local-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #45ca8c;
+}
+
+.runtime-state--busy span {
+  background: #7788ff;
+}
+
+.activity-section {
+  display: grid;
+  gap: 10px;
+  padding: 20px 0;
+  border-bottom: 1px solid #1d2431;
+}
+
+.activity-section small {
+  color: #626d80;
+  font-size: 10px;
+}
+
+.model-name {
+  overflow: hidden;
+  color: #d9deea;
+  font-size: 12px;
+  text-overflow: ellipsis;
+}
+
+.metric {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #747f91;
+  font-size: 11px;
+}
+
+.metric strong {
+  color: #cbd2df;
+  font-size: 11px;
+}
+
+.local-card {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 20px;
+  padding: 12px;
+  border: 1px solid #223047;
+  border-radius: 10px;
+  background: #101724;
+}
+
+.local-card div {
+  display: grid;
+  gap: 2px;
+}
+
+.local-card strong {
+  font-size: 10px;
+}
+
+.local-card small {
+  color: #667287;
+  font-size: 9px;
+}
