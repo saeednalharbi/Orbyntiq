@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 
+from orbyntiq.api.routes.llm import router as llm_router
 from orbyntiq.core.config import get_settings
 from orbyntiq.core.logging import configure_logging, get_logger
 
@@ -13,6 +14,8 @@ app = FastAPI(
     title=settings.app_name,
     version="0.1.0",
 )
+
+app.include_router(llm_router)
 
 
 @app.get("/health")
