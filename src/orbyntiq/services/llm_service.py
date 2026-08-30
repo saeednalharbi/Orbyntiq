@@ -1,9 +1,10 @@
 from collections.abc import Sequence
 from typing import TypeVar
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from orbyntiq.llm.base import LLMProvider
+from orbyntiq.llm.errors import LLMInvalidResponseError
 from orbyntiq.llm.messages import build_messages
 from orbyntiq.llm.models import LLMMessage, LLMResponse
 from orbyntiq.llm.prompts import BASE_SYSTEM_PROMPT
@@ -57,4 +58,9 @@ class LLMService:
             response_model.model_json_schema(),
         )
 
-        return response_model.model_validate_json(response.content)
+        try:
+            return response_model.model_validate_json(response.content)
+        except ValidationError as exc:
+            raise LLMInvalidResponseError(
+                "LLM structured response failed schema validation."
+            ) from exc

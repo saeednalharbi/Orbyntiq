@@ -1,6 +1,9 @@
 from orbyntiq.llm.base import LLMProvider
 from orbyntiq.llm.errors import (
     LLMConnectionError,
+    LLMHTTPError,
+    LLMInvalidResponseError,
+    LLMModelNotFoundError,
     LLMProviderError,
     LLMTimeoutError,
 )
@@ -22,4 +25,7 @@ __all__ = [
     "LLMConnectionError",
     "LLMProviderError",
     "LLMTimeoutError",
+    "LLMHTTPError",
+    "LLMInvalidResponseError",
+    "LLMModelNotFoundError",
 ]

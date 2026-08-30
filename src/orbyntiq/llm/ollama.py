@@ -5,7 +5,13 @@ from typing import Any
 import httpx
 
 from orbyntiq.llm.base import LLMProvider
-from orbyntiq.llm.errors import LLMConnectionError, LLMTimeoutError
+from orbyntiq.llm.errors import (
+    LLMConnectionError,
+    LLMHTTPError,
+    LLMInvalidResponseError,
+    LLMModelNotFoundError,
+    LLMTimeoutError,
+)
 from orbyntiq.llm.models import LLMMessage, LLMResponse
 
 
@@ -75,10 +81,16 @@ class OllamaProvider(LLMProvider):
                     response = await client.post("/api/chat", json=payload)
                     response.raise_for_status()
 
-                data = response.json()
+                try:
+                    data = response.json()
+                    content = data["message"]["content"]
+                except (ValueError, KeyError, TypeError) as exc:
+                    raise LLMInvalidResponseError(
+                        "Ollama returned an invalid response."
+                    ) from exc
 
                 return LLMResponse(
-                    content=data["message"]["content"],
+                    content=content,
                     model=data.get("model", self.model),
                     prompt_tokens=data.get("prompt_eval_count"),
                     completion_tokens=data.get("eval_count"),
@@ -90,6 +102,16 @@ class OllamaProvider(LLMProvider):
                     raise LLMTimeoutError(
                         f"LLM request timed out after {attempt + 1} attempts."
                     ) from exc
+
+            except httpx.HTTPStatusError as exc:
+                if exc.response.status_code == 404:
+                    raise LLMModelNotFoundError(
+                        f"LLM model '{self.model}' was not found."
+                    ) from exc
+
+                raise LLMHTTPError(
+                    f"Ollama returned HTTP {exc.response.status_code}."
+                ) from exc
 
             except httpx.TransportError as exc:
                 if attempt >= self.max_retries:

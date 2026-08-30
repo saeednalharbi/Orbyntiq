@@ -8,3 +8,15 @@ class LLMTimeoutError(LLMProviderError):
 
 class LLMConnectionError(LLMProviderError):
     """Raised when Orbyntiq cannot connect to an LLM provider."""
+
+
+class LLMModelNotFoundError(LLMProviderError):
+    """Raised when the configured model is unavailable."""
+
+
+class LLMHTTPError(LLMProviderError):
+    """Raised when the provider returns an unexpected HTTP error."""
+
+
+class LLMInvalidResponseError(LLMProviderError):
+    """Raised when the provider returns malformed or invalid data."""
