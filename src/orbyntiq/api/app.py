@@ -9,6 +9,16 @@ from orbyntiq.api.routes.llm import router as llm_router
 from orbyntiq.api.routes.websocket import router as websocket_router
 from orbyntiq.core.config import get_settings
 from orbyntiq.core.logging import configure_logging, get_logger
+from orbyntiq.core.mongodb import (
+    MongoDBUnavailableError,
+    close_mongodb_client,
+    create_mongodb_client,
+    verify_mongodb_connection,
+)
+from orbyntiq.core.mongodb_schema import (
+    MongoDBSchemaError,
+    ensure_mongodb_schema,
+)
 from orbyntiq.core.redis import (
     RedisUnavailableError,
     close_redis_client,
@@ -26,10 +36,17 @@ logger = get_logger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     redis_client = create_redis_client(settings)
+    mongodb_client = create_mongodb_client(settings)
+
     redis_connected = False
+    mongodb_connected = False
 
     app.state.redis = None
     app.state.redis_available = False
+
+    app.state.mongodb = None
+    app.state.mongodb_database = None
+    app.state.mongodb_available = False
 
     try:
         try:
@@ -47,11 +64,48 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
             logger.info("Redis connection established")
 
+        try:
+            await verify_mongodb_connection(mongodb_client)
+        except MongoDBUnavailableError as exc:
+            logger.warning(
+                "MongoDB unavailable; application continuing in degraded mode: %s",
+                exc,
+            )
+            await close_mongodb_client(mongodb_client)
+        else:
+            mongodb_database = mongodb_client[settings.mongodb_database]
+
+            try:
+                await ensure_mongodb_schema(mongodb_database)
+            except MongoDBSchemaError as exc:
+                logger.warning(
+                    "MongoDB schema initialization failed; "
+                    "application continuing in degraded mode: %s",
+                    exc,
+                )
+                await close_mongodb_client(mongodb_client)
+            else:
+                app.state.mongodb = mongodb_client
+                app.state.mongodb_database = mongodb_database
+                app.state.mongodb_available = True
+                mongodb_connected = True
+
+                logger.info("MongoDB connection established")
+                logger.info("MongoDB schema initialized")
+
         yield
     finally:
+        if mongodb_connected:
+            await close_mongodb_client(mongodb_client)
+            logger.info("MongoDB connection closed")
+
         if redis_connected:
             await close_redis_client(redis_client)
             logger.info("Redis connection closed")
+
+        app.state.mongodb = None
+        app.state.mongodb_database = None
+        app.state.mongodb_available = False
 
         app.state.redis = None
         app.state.redis_available = False

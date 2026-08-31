@@ -40,6 +40,12 @@ class Settings(BaseSettings):
     redis_agent_state_ttl_seconds: int = Field(default=3_600, gt=0)
     redis_cache_ttl_seconds: int = Field(default=300, gt=0)
 
+    mongodb_url: str = "mongodb://localhost:27017"
+    mongodb_database: str = "orbyntiq"
+    mongodb_connect_timeout_seconds: float = Field(default=3.0, gt=0)
+    mongodb_server_selection_timeout_seconds: float = Field(default=3.0, gt=0)
+    mongodb_operation_timeout_seconds: float = Field(default=5.0, gt=0)
+
 
 @lru_cache
 def get_settings() -> Settings:

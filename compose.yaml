@@ -24,3 +24,30 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+
+  mongodb:
+    image: mongo:8.0
+    container_name: orbyntiq-mongodb
+
+    ports:
+      - "127.0.0.1:27017:27017"
+
+    volumes:
+      - mongodb_data:/data/db
+
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mongosh",
+          "--quiet",
+          "--eval",
+          "db.adminCommand('ping').ok",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  mongodb_data:
