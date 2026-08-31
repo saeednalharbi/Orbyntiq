@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from orbyntiq.api.dependencies import get_llm_service
 from orbyntiq.api.error_handlers import register_error_handlers
 from orbyntiq.api.routes.llm import router as llm_router
 from orbyntiq.api.routes.websocket import router as websocket_router
@@ -31,12 +32,22 @@ from orbyntiq.core.redis import (
     create_redis_client,
     verify_redis_connection,
 )
+from orbyntiq.mcp.runtime import configure_mcp_services
+from orbyntiq.mcp.server import mcp_server
+from orbyntiq.rag.embeddings import create_embedding_provider
+from orbyntiq.rag.retrieval import SemanticRetriever
+from orbyntiq.rag.service import RAGService
 
 settings = get_settings()
 
 configure_logging()
 
 logger = get_logger(__name__)
+
+mcp_http_app = mcp_server.streamable_http_app(
+    streamable_http_path="/",
+)
+
 
 
 @asynccontextmanager
@@ -58,6 +69,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
     app.state.qdrant = None
     app.state.qdrant_available = False
+
+    configure_mcp_services()
 
     try:
         try:
@@ -119,8 +132,30 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
             logger.info("Qdrant connection established")
 
+            embedding_provider = create_embedding_provider(settings)
+
+            retriever = SemanticRetriever(
+                qdrant=qdrant_client,
+                embeddings=embedding_provider,
+                settings=settings,
+            )
+
+            rag_service = RAGService(
+                retriever=retriever,
+                llm_service=get_llm_service(),
+            )
+
+            configure_mcp_services(
+                retriever=retriever,
+                rag_service=rag_service,
+            )
+
+            logger.info("MCP RAG services configured")
+
         yield
     finally:
+        configure_mcp_services()
+
         if qdrant_connected:
             await close_qdrant_client(qdrant_client)
             logger.info("Qdrant connection closed")
@@ -144,10 +179,18 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         app.state.redis_available = False
 
 
+@asynccontextmanager
+async def application_lifespan(app: FastAPI) -> AsyncIterator[None]:
+    """Run application services and the MCP transport lifecycle."""
+    async with lifespan(app):
+        async with mcp_server.session_manager.run():
+            yield
+
+
 app = FastAPI(
     title=settings.app_name,
     version="0.1.0",
-    lifespan=lifespan,
+    lifespan=application_lifespan,
 )
 
 app.add_middleware(
@@ -159,6 +202,7 @@ app.add_middleware(
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["Mcp-Session-Id"],
 )
 
 register_error_handlers(app)
@@ -166,6 +210,8 @@ register_error_handlers(app)
 app.include_router(llm_router)
 app.include_router(websocket_router)
 
+
+app.mount("/mcp", mcp_http_app, name="mcp")
 
 @app.get("/health")
 def health_check() -> dict[str, str]:
