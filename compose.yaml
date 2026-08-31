@@ -1,18 +1,14 @@
-services:
+﻿services:
   api:
     build:
       context: .
       dockerfile: Dockerfile
-
     container_name: orbyntiq-api
-
+    environment:
+      ORBYNTIQ_API_HOST: 0.0.0.0
+      ORBYNTIQ_API_PORT: "8000"
     ports:
       - "8000:8000"
-
-    environment:
-      ORBYNTIQ_API_HOST: "0.0.0.0"
-      ORBYNTIQ_API_PORT: "8000"
-
     healthcheck:
       test:
         [
@@ -28,13 +24,10 @@ services:
   mongodb:
     image: mongo:8.0
     container_name: orbyntiq-mongodb
-
     ports:
       - "127.0.0.1:27017:27017"
-
     volumes:
       - mongodb_data:/data/db
-
     healthcheck:
       test:
         [
@@ -49,5 +42,25 @@ services:
       retries: 5
       start_period: 10s
 
+  qdrant:
+    image: qdrant/qdrant:v1.19.0
+    container_name: orbyntiq-qdrant
+    ports:
+      - "127.0.0.1:6333:6333"
+      - "127.0.0.1:6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "bash -c 'echo > /dev/tcp/127.0.0.1/6333'",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
 volumes:
   mongodb_data:
+  qdrant_data:

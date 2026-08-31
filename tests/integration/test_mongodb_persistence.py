@@ -1,4 +1,5 @@
 import asyncio
+from datetime import timedelta
 from uuid import uuid4
 
 import pytest
@@ -62,6 +63,10 @@ def test_conversation_and_message_round_trip() -> None:
                 conversation_id=conversation.id,
                 role="assistant",
                 content="Second message",
+                created_at=(
+                    first_message.created_at
+                    + timedelta(milliseconds=1)
+                ),
             )
 
             await messages.create(first_message)

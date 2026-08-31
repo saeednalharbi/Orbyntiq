@@ -31,6 +31,11 @@ class Settings(BaseSettings):
     llm_max_retries: int = Field(default=2, ge=0, le=10)
     llm_retry_base_delay_seconds: float = Field(default=0.5, ge=0)
 
+    embedding_provider: Literal["ollama"] = "ollama"
+    embedding_model: str = "qwen3-embedding:0.6b"
+    embedding_dimension: int = Field(default=1024, gt=0)
+    embedding_timeout_seconds: float = Field(default=60.0, gt=0)
+
     redis_url: str = "redis://localhost:6379/0"
     redis_connect_timeout_seconds: float = Field(default=2.0, gt=0)
     redis_operation_timeout_seconds: float = Field(default=2.0, gt=0)
@@ -45,6 +50,12 @@ class Settings(BaseSettings):
     mongodb_connect_timeout_seconds: float = Field(default=3.0, gt=0)
     mongodb_server_selection_timeout_seconds: float = Field(default=3.0, gt=0)
     mongodb_operation_timeout_seconds: float = Field(default=5.0, gt=0)
+
+    qdrant_url: str = "http://localhost:6333"
+    qdrant_grpc_port: int = Field(default=6334, ge=1, le=65_535)
+    qdrant_prefer_grpc: bool = False
+    qdrant_timeout_seconds: float = Field(default=5.0, gt=0)
+    qdrant_collection: str = "orbyntiq_documents"
 
 
 @lru_cache
