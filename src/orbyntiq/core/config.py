@@ -1,4 +1,4 @@
-from functools import lru_cache
+﻿from functools import lru_cache
 from typing import Literal
 
 from pydantic import Field
@@ -22,6 +22,8 @@ class Settings(BaseSettings):
     api_host: str = "127.0.0.1"
     api_port: int = 8000
 
+    websocket_idle_timeout_seconds: float = Field(default=120.0, gt=0)
+
     llm_provider: Literal["ollama"] = "ollama"
     llm_model: str = "qwen3:4b-instruct"
     ollama_base_url: str = "http://localhost:11434"
@@ -29,7 +31,7 @@ class Settings(BaseSettings):
     llm_max_retries: int = Field(default=2, ge=0, le=10)
     llm_retry_base_delay_seconds: float = Field(default=0.5, ge=0)
 
+
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
-

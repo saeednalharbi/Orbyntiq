@@ -1,4 +1,4 @@
-<section
+﻿<section
   class="messages"
   aria-label="Conversation"
   aria-live="polite"
@@ -16,7 +16,11 @@
     </div>
   }
 
-  @for (message of messages; track message.id) {
+  @for (
+    message of messages;
+    track message.id;
+    let isLast = $last
+  ) {
     <article
       class="message"
       [class.message--user]="message.role === 'user'"
@@ -37,12 +41,44 @@
           }
         </div>
 
-        <p>{{ message.content }}</p>
+        @if (
+          isLoading &&
+          isLast &&
+          message.role === 'assistant' &&
+          !message.content
+        ) {
+          <div
+            class="thinking"
+            aria-label="Orbyntiq is generating a response"
+          >
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        } @else {
+          <p>
+            {{ message.content }}
+
+            @if (
+              isLoading &&
+              isLast &&
+              message.role === 'assistant'
+            ) {
+              <span aria-hidden="true">▍</span>
+            }
+          </p>
+        }
       </div>
     </article>
   }
 
-  @if (isLoading) {
+  @if (
+    isLoading &&
+    (
+      messages.length === 0 ||
+      messages[messages.length - 1].role !== 'assistant'
+    )
+  ) {
     <article class="message message--assistant">
       <div class="avatar">O</div>
 

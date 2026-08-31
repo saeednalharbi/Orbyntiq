@@ -1,10 +1,10 @@
-import { AsyncPipe } from '@angular/common';
+﻿import { AsyncPipe } from '@angular/common';
 import { Component, inject } from '@angular/core';
 
+import { ChatStateService } from '../../services/chat-state.service';
 import { ActivityPanel } from '../activity-panel/activity-panel';
 import { MessageList } from '../message-list/message-list';
 import { PromptInput } from '../prompt-input/prompt-input';
-import { ChatStateService } from '../../services/chat-state.service';
 
 @Component({
   selector: 'app-chat-page',
@@ -24,6 +24,10 @@ export class ChatPage {
 
   sendPrompt(prompt: string): void {
     this.chatState.sendMessage(prompt);
+  }
+
+  cancelResponse(): void {
+    this.chatState.cancelResponse();
   }
 
   resetConversation(): void {

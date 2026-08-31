@@ -1,4 +1,4 @@
-import {
+﻿import {
   Component,
   EventEmitter,
   Input,
@@ -20,7 +20,12 @@ export class PromptInput {
   readonly promptSubmit = new EventEmitter<string>();
 
   @Output()
-  readonly conversationReset = new EventEmitter<void>();
+  readonly generationCancel =
+    new EventEmitter<void>();
+
+  @Output()
+  readonly conversationReset =
+    new EventEmitter<void>();
 
   prompt = '';
 
@@ -33,6 +38,14 @@ export class PromptInput {
 
     this.promptSubmit.emit(prompt);
     this.prompt = '';
+  }
+
+  cancelGeneration(): void {
+    if (!this.disabled) {
+      return;
+    }
+
+    this.generationCancel.emit();
   }
 
   handleKeydown(event: KeyboardEvent): void {

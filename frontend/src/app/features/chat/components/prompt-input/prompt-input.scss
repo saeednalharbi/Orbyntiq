@@ -1,4 +1,4 @@
-.prompt-form {
+﻿.prompt-form {
   padding: 16px 20px 18px;
   border-top: 1px solid #202735;
 }
@@ -49,6 +49,12 @@ textarea::placeholder {
   font-size: 9px;
 }
 
+.generation-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
 .reset-button {
   padding: 0;
   border: 0;
@@ -78,6 +84,33 @@ textarea::placeholder {
   background: #6073f5;
 }
 
+.stop-button {
+  display: inline-flex;
+  gap: 7px;
+  align-items: center;
+  padding: 8px 11px;
+  border: 1px solid #6a3b42;
+  border-radius: 8px;
+  background: rgba(120, 47, 57, 0.13);
+  color: #e3a6ac;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.stop-button:hover {
+  border-color: #8c4d56;
+  background: rgba(140, 55, 66, 0.22);
+  color: #f1bdc1;
+}
+
+.stop-icon {
+  width: 7px;
+  height: 7px;
+  border-radius: 1px;
+  background: currentColor;
+}
+
 .send-button:disabled,
 .reset-button:disabled {
   cursor: not-allowed;
@@ -88,4 +121,26 @@ textarea::placeholder {
   margin: 8px 2px 0;
   color: #535d6f;
   font-size: 9px;
+}
+
+@media (max-width: 600px) {
+  .prompt-actions {
+    align-items: flex-end;
+  }
+
+  .prompt-meta > span {
+    display: none;
+  }
+
+  .generation-actions {
+    gap: 6px;
+  }
+
+  .stop-button {
+    padding: 8px;
+  }
+
+  .send-button {
+    min-width: 66px;
+  }
 }

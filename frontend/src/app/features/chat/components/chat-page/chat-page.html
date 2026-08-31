@@ -1,4 +1,4 @@
-@if (state$ | async; as state) {
+﻿@if (state$ | async; as state) {
 <div class="chat-layout">
   <section class="conversation-panel">
     <header class="conversation-header">
@@ -7,29 +7,53 @@
         <h2>Local Intelligence</h2>
       </div>
 
-      <span class="message-count">
-        {{ state.messages.length }}
-        {{ state.messages.length === 1 ? 'message' : 'messages' }}
-      </span>
+      <div class="conversation-status">
+        @if (state.isLoading) {
+        <span class="streaming-status">
+          <span class="streaming-status__dot"></span>
+          Streaming
+        </span>
+        }
+
+        <span class="message-count">
+          {{ state.messages.length }}
+          {{ state.messages.length === 1 ? 'message' : 'messages' }}
+        </span>
+      </div>
     </header>
 
     @if (state.error) {
     <div class="error-banner" role="alert">
       <span>{{ state.error }}</span>
 
-      <button type="button" aria-label="Dismiss error" (click)="clearError()">
+      <button
+        type="button"
+        aria-label="Dismiss error"
+        (click)="clearError()"
+      >
         &times;
       </button>
     </div>
     }
 
-    <app-message-list [messages]="state.messages" [isLoading]="state.isLoading" />
+    <app-message-list
+      [messages]="state.messages"
+      [isLoading]="state.isLoading"
+    />
 
-    <app-prompt-input [disabled]="state.isLoading" (promptSubmit)="sendPrompt($event)"
-      (conversationReset)="resetConversation()" />
+    <app-prompt-input
+      [disabled]="state.isLoading"
+      (promptSubmit)="sendPrompt($event)"
+      (generationCancel)="cancelResponse()"
+      (conversationReset)="resetConversation()"
+    />
   </section>
 
-  <app-activity-panel [model]="state.lastModel" [usage]="state.lastUsage" [isLoading]="state.isLoading"
-    [messageCount]="state.messages.length" />
+  <app-activity-panel
+    [model]="state.lastModel"
+    [usage]="state.lastUsage"
+    [isLoading]="state.isLoading"
+    [messageCount]="state.messages.length"
+  />
 </div>
 }

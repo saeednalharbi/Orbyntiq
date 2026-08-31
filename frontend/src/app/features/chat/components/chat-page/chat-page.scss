@@ -1,4 +1,4 @@
-:host {
+﻿:host {
   display: block;
 }
 
@@ -41,6 +41,35 @@
   letter-spacing: 0.14em;
 }
 
+.conversation-status {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.streaming-status {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  padding: 5px 8px;
+  border: 1px solid rgba(82, 102, 239, 0.35);
+  border-radius: 999px;
+  background: rgba(82, 102, 239, 0.08);
+  color: #94a2ff;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.streaming-status__dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: streaming-pulse 1.2s ease-in-out infinite;
+}
+
 .message-count {
   color: #626d80;
   font-size: 10px;
@@ -68,6 +97,19 @@
   font-size: 17px;
 }
 
+@keyframes streaming-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.8);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 @media (max-width: 1000px) {
   .chat-layout {
     grid-template-columns: minmax(0, 1fr);
@@ -91,5 +133,14 @@
   .conversation-panel {
     min-height: calc(100dvh - 105px);
     border-radius: 12px;
+  }
+
+  .conversation-status {
+    gap: 7px;
+  }
+
+  .streaming-status {
+    padding: 4px 6px;
+    font-size: 7px;
   }
 }

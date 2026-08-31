@@ -1,4 +1,4 @@
-from collections.abc import Sequence
+﻿from collections.abc import AsyncIterator, Sequence
 from typing import TypeVar
 
 from pydantic import BaseModel, ValidationError
@@ -24,6 +24,15 @@ class LLMService:
     ) -> LLMResponse:
         return await self.provider.generate(messages)
 
+    async def generate_stream(
+        self,
+        messages: Sequence[LLMMessage],
+    ) -> AsyncIterator[str]:
+        """Stream text chunks from the configured LLM provider."""
+
+        async for chunk in self.provider.stream(messages):
+            yield chunk
+
     async def chat(
         self,
         prompt: str,
@@ -38,6 +47,24 @@ class LLMService:
         )
 
         return await self.generate(messages)
+
+    async def chat_stream(
+        self,
+        prompt: str,
+        *,
+        system_prompt: str = BASE_SYSTEM_PROMPT,
+        history: Sequence[LLMMessage] = (),
+    ) -> AsyncIterator[str]:
+        """Build chat messages and stream the generated response."""
+
+        messages = build_messages(
+            prompt,
+            system_prompt=system_prompt,
+            history=history,
+        )
+
+        async for chunk in self.generate_stream(messages):
+            yield chunk
 
     async def chat_structured(
         self,

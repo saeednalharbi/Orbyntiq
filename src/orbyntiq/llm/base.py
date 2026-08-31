@@ -1,5 +1,5 @@
-from abc import ABC, abstractmethod
-from collections.abc import Sequence
+﻿from abc import ABC, abstractmethod
+from collections.abc import AsyncIterator, Sequence
 from typing import Any
 
 from orbyntiq.llm.models import LLMMessage, LLMResponse
@@ -22,3 +22,14 @@ class LLMProvider(ABC):
         schema: dict[str, Any],
     ) -> LLMResponse:
         """Generate a response constrained to a JSON schema."""
+
+    def stream(
+        self,
+        messages: Sequence[LLMMessage],
+    ) -> AsyncIterator[str]:
+        """Stream text chunks from the provider."""
+
+        del messages
+        raise NotImplementedError(
+            "Streaming is not supported by this LLM provider."
+        )
