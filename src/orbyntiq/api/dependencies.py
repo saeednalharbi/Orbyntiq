@@ -1,4 +1,4 @@
-﻿from functools import lru_cache
+from functools import lru_cache
 
 from fastapi import Request
 
@@ -18,11 +18,18 @@ def get_llm_service() -> LLMService:
 
     return LLMService(
         provider,
-        metrics_enabled=(
-            settings.observability_enabled
-            and settings.metrics_enabled
-        ),
+        metrics_enabled=(settings.observability_enabled and settings.metrics_enabled),
     )
+
+
+async def close_llm_service() -> None:
+    """Close and clear the cached LLM service, when initialized."""
+    if get_llm_service.cache_info().currsize == 0:
+        return
+
+    service = get_llm_service()
+    await service.close()
+    get_llm_service.cache_clear()
 
 
 def get_multi_agent_service(
@@ -35,8 +42,6 @@ def get_multi_agent_service(
     )
 
     if service is None:
-        raise MultiAgentUnavailableError(
-            "Multi-agent service is unavailable."
-        )
+        raise MultiAgentUnavailableError("Multi-agent service is unavailable.")
 
     return service

@@ -27,9 +27,12 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
+    "locust>=2.46,<2.47",
+    "psutil>=7.0,<8.0",
     "pytest>=8.0",
     "pytest-cov>=6.0",
-    "ruff>=0.6"
+    "ruff>=0.6",
+    "websocket-client>=1.9,<2.0"
 ]
 
 [tool.setuptools.packages.find]
@@ -45,8 +48,8 @@ select = ["E", "F", "I", "B", "UP"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["src"]
-addopts = "-ra"
+pythonpath = ["src", "."]
+addopts = "-ra -p no:locust"
 
 [tool.coverage.run]
 source = ["orbyntiq"]

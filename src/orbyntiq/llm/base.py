@@ -1,4 +1,4 @@
-﻿from abc import ABC, abstractmethod
+from abc import ABC, abstractmethod
 from collections.abc import AsyncIterator, Sequence
 from typing import Any
 
@@ -30,6 +30,7 @@ class LLMProvider(ABC):
         """Stream text chunks from the provider."""
 
         del messages
-        raise NotImplementedError(
-            "Streaming is not supported by this LLM provider."
-        )
+        raise NotImplementedError("Streaming is not supported by this LLM provider.")
+
+    async def close(self) -> None:  # noqa: B027
+        """Release resources owned by the provider."""

@@ -12,7 +12,10 @@ from orbyntiq.agents import (
     SynthesizerAgent,
     build_multi_agent_graph,
 )
-from orbyntiq.api.dependencies import get_llm_service
+from orbyntiq.api.dependencies import (
+    close_llm_service,
+    get_llm_service,
+)
 from orbyntiq.api.error_handlers import register_error_handlers
 from orbyntiq.api.middleware import (
     RequestIDMiddleware,
@@ -72,7 +75,6 @@ logger = get_logger(__name__)
 mcp_http_app = mcp_server.streamable_http_app(
     streamable_http_path="/",
 )
-
 
 
 @asynccontextmanager
@@ -144,17 +146,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
                 mongodb_connected = True
 
                 try:
-                    execution_repository = (
-                        AgentExecutionRepository(
-                            mongodb_database
-                        )
-                    )
+                    execution_repository = AgentExecutionRepository(mongodb_database)
 
-                    workflow_repository = (
-                        WorkflowHistoryRepository(
-                            mongodb_database
-                        )
-                    )
+                    workflow_repository = WorkflowHistoryRepository(mongodb_database)
                 except (TypeError, AttributeError) as exc:
                     execution_repository = None
                     workflow_repository = None
@@ -220,10 +214,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
                     execution_repository=execution_repository,
                     workflow_repository=workflow_repository,
                 ),
-                metrics_enabled=(
-                    settings.observability_enabled
-                    and settings.metrics_enabled
-                ),
+                metrics_enabled=(settings.observability_enabled and settings.metrics_enabled),
             )
 
             logger.info("Multi-agent service configured")
@@ -232,6 +223,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     finally:
         configure_mcp_services()
         app.state.multi_agent_service = None
+
+        await close_llm_service()
+        logger.info("LLM service closed")
 
         if embedding_provider is not None:
             await embedding_provider.close()
@@ -290,10 +284,7 @@ app.add_middleware(
     expose_headers=["Mcp-Session-Id", "X-Request-ID", "X-Trace-ID"],
 )
 
-if (
-    settings.observability_enabled
-    and settings.metrics_enabled
-):
+if settings.observability_enabled and settings.metrics_enabled:
     app.add_middleware(
         MetricsMiddleware,
         metrics_path=settings.metrics_path,
@@ -316,6 +307,7 @@ app.include_router(websocket_router)
 
 
 app.mount("/mcp", mcp_http_app, name="mcp")
+
 
 @app.get("/health")
 def health_check() -> dict[str, str]:

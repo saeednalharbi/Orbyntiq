@@ -6,7 +6,6 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-
     # Observability
     observability_enabled: bool = True
     metrics_enabled: bool = True
@@ -45,6 +44,15 @@ class Settings(BaseSettings):
     llm_timeout_seconds: float = Field(default=60.0, gt=0)
     llm_max_retries: int = Field(default=2, ge=0, le=10)
     llm_retry_base_delay_seconds: float = Field(default=0.5, ge=0)
+    llm_max_concurrency: int = Field(default=2, ge=1, le=32)
+    llm_http_max_connections: int = Field(default=4, ge=1, le=100)
+    llm_http_max_keepalive_connections: int = Field(
+        default=2,
+        ge=1,
+        le=100,
+    )
+    llm_http_keepalive_expiry_seconds: float = Field(default=30.0, gt=0)
+    ollama_keep_alive: str = "10m"
 
     embedding_provider: Literal["ollama"] = "ollama"
     embedding_model: str = "qwen3-embedding:0.6b"

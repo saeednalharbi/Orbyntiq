@@ -57,19 +57,13 @@ def _set_response_attributes(
         ),
     )
 
-    if (
-        isinstance(response.prompt_tokens, int)
-        and response.prompt_tokens >= 0
-    ):
+    if isinstance(response.prompt_tokens, int) and response.prompt_tokens >= 0:
         span.set_attribute(
             "gen_ai.usage.input_tokens",
             response.prompt_tokens,
         )
 
-    if (
-        isinstance(response.completion_tokens, int)
-        and response.completion_tokens >= 0
-    ):
+    if isinstance(response.completion_tokens, int) and response.completion_tokens >= 0:
         span.set_attribute(
             "gen_ai.usage.output_tokens",
             response.completion_tokens,
@@ -92,9 +86,7 @@ class LLMService:
         self,
         messages: Sequence[LLMMessage],
     ) -> LLMResponse:
-        provider, model = get_llm_metric_labels(
-            self.provider
-        )
+        provider, model = get_llm_metric_labels(self.provider)
 
         operation = "generate"
         status = "success"
@@ -117,9 +109,7 @@ class LLMService:
                 ).inc()
 
             try:
-                response = await self.provider.generate(
-                    messages
-                )
+                response = await self.provider.generate(messages)
 
             except asyncio.CancelledError:
                 status = "cancelled"
@@ -152,10 +142,7 @@ class LLMService:
                 )
 
                 if self.metrics_enabled:
-                    duration = (
-                        perf_counter()
-                        - started_at
-                    )
+                    duration = perf_counter() - started_at
 
                     LLM_REQUESTS_TOTAL.labels(
                         provider=provider,
@@ -169,9 +156,7 @@ class LLMService:
                         model=model,
                         operation=operation,
                         status=status,
-                    ).observe(
-                        duration
-                    )
+                    ).observe(duration)
 
                     LLM_REQUESTS_IN_PROGRESS.labels(
                         provider=provider,
@@ -185,9 +170,7 @@ class LLMService:
     ) -> AsyncIterator[str]:
         """Stream text chunks from the configured LLM provider."""
 
-        provider, model = get_llm_metric_labels(
-            self.provider
-        )
+        provider, model = get_llm_metric_labels(self.provider)
 
         operation = "stream"
         status = "success"
@@ -211,9 +194,7 @@ class LLMService:
                 ).inc()
 
             try:
-                async for chunk in self.provider.stream(
-                    messages
-                ):
+                async for chunk in self.provider.stream(messages):
                     chunk_count += 1
 
                     if self.metrics_enabled:
@@ -247,10 +228,7 @@ class LLMService:
                 )
 
                 if self.metrics_enabled:
-                    duration = (
-                        perf_counter()
-                        - started_at
-                    )
+                    duration = perf_counter() - started_at
 
                     LLM_REQUESTS_TOTAL.labels(
                         provider=provider,
@@ -264,9 +242,7 @@ class LLMService:
                         model=model,
                         operation=operation,
                         status=status,
-                    ).observe(
-                        duration
-                    )
+                    ).observe(duration)
 
                     LLM_STREAMS_TOTAL.labels(
                         provider=provider,
@@ -278,9 +254,7 @@ class LLMService:
                         provider=provider,
                         model=model,
                         status=status,
-                    ).observe(
-                        duration
-                    )
+                    ).observe(duration)
 
                     LLM_REQUESTS_IN_PROGRESS.labels(
                         provider=provider,
@@ -318,9 +292,7 @@ class LLMService:
             history=history,
         )
 
-        async for chunk in self.generate_stream(
-            messages
-        ):
+        async for chunk in self.generate_stream(messages):
             yield chunk
 
     async def chat_structured(
@@ -337,9 +309,7 @@ class LLMService:
             history=history,
         )
 
-        provider, model = get_llm_metric_labels(
-            self.provider
-        )
+        provider, model = get_llm_metric_labels(self.provider)
 
         operation = "structured"
         status = "success"
@@ -362,24 +332,17 @@ class LLMService:
                 ).inc()
 
             try:
-                response = (
-                    await self.provider.generate_structured(
-                        messages,
-                        response_model.model_json_schema(),
-                    )
+                response = await self.provider.generate_structured(
+                    messages,
+                    response_model.model_json_schema(),
                 )
 
                 try:
-                    result = (
-                        response_model.model_validate_json(
-                            response.content
-                        )
-                    )
+                    result = response_model.model_validate_json(response.content)
 
                 except ValidationError as exc:
                     raise LLMInvalidResponseError(
-                        "LLM structured response failed "
-                        "schema validation."
+                        "LLM structured response failed schema validation."
                     ) from exc
 
             except asyncio.CancelledError:
@@ -413,10 +376,7 @@ class LLMService:
                 )
 
                 if self.metrics_enabled:
-                    duration = (
-                        perf_counter()
-                        - started_at
-                    )
+                    duration = perf_counter() - started_at
 
                     LLM_REQUESTS_TOTAL.labels(
                         provider=provider,
@@ -430,12 +390,14 @@ class LLMService:
                         model=model,
                         operation=operation,
                         status=status,
-                    ).observe(
-                        duration
-                    )
+                    ).observe(duration)
 
                     LLM_REQUESTS_IN_PROGRESS.labels(
                         provider=provider,
                         model=model,
                         operation=operation,
                     ).dec()
+
+    async def close(self) -> None:
+        """Release the underlying provider resources."""
+        await self.provider.close()

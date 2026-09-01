@@ -1,4 +1,4 @@
-﻿import asyncio
+import asyncio
 import json
 from collections.abc import AsyncIterator, Sequence
 from typing import Any
@@ -27,20 +27,49 @@ class OllamaProvider(LLMProvider):
         timeout: float,
         max_retries: int,
         retry_base_delay: float,
+        max_concurrency: int = 2,
+        max_connections: int = 4,
+        max_keepalive_connections: int = 2,
+        keepalive_expiry: float = 30.0,
+        keep_alive: str = "10m",
     ) -> None:
         self.model = model
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
         self.max_retries = max_retries
         self.retry_base_delay = retry_base_delay
+        self.keep_alive = keep_alive
+
+        self._semaphore = asyncio.Semaphore(max_concurrency)
+        self._limits = httpx.Limits(
+            max_connections=max_connections,
+            max_keepalive_connections=max_keepalive_connections,
+            keepalive_expiry=keepalive_expiry,
+        )
+        self._client: httpx.AsyncClient | None = None
+
+    def _get_client(self) -> httpx.AsyncClient:
+        if self._client is None or getattr(self._client, "is_closed", False):
+            self._client = httpx.AsyncClient(
+                base_url=self.base_url,
+                timeout=self.timeout,
+                limits=self._limits,
+            )
+
+        return self._client
+
+    async def close(self) -> None:
+        client = self._client
+        self._client = None
+
+        if client is not None:
+            await client.aclose()
 
     async def generate(
         self,
         messages: Sequence[LLMMessage],
     ) -> LLMResponse:
-        return await self._generate(
-            messages=messages,
-        )
+        return await self._generate(messages=messages)
 
     async def generate_structured(
         self,
@@ -58,6 +87,14 @@ class OllamaProvider(LLMProvider):
     ) -> AsyncIterator[str]:
         """Stream text chunks from Ollama as they are generated."""
 
+        async with self._semaphore:
+            async for chunk in self._stream(messages):
+                yield chunk
+
+    async def _stream(
+        self,
+        messages: Sequence[LLMMessage],
+    ) -> AsyncIterator[str]:
         payload: dict[str, Any] = {
             "model": self.model,
             "messages": [
@@ -68,69 +105,64 @@ class OllamaProvider(LLMProvider):
                 for message in messages
             ],
             "stream": True,
+            "keep_alive": self.keep_alive,
         }
 
         for attempt in range(self.max_retries + 1):
             emitted_chunk = False
 
             try:
-                async with httpx.AsyncClient(
-                    base_url=self.base_url,
-                    timeout=self.timeout,
-                ) as client:
-                    async with client.stream(
-                        "POST",
-                        "/api/chat",
-                        json=payload,
-                    ) as response:
-                        response.raise_for_status()
+                client = self._get_client()
 
-                        async for line in response.aiter_lines():
-                            if not line:
-                                continue
+                async with client.stream(
+                    "POST",
+                    "/api/chat",
+                    json=payload,
+                ) as response:
+                    response.raise_for_status()
 
-                            try:
-                                data = json.loads(line)
-                            except json.JSONDecodeError as exc:
-                                raise LLMInvalidResponseError(
-                                    "Ollama returned an invalid streaming response."
-                                ) from exc
+                    async for line in response.aiter_lines():
+                        if not line:
+                            continue
 
-                            if not isinstance(data, dict):
-                                raise LLMInvalidResponseError(
-                                    "Ollama returned an invalid streaming response."
-                                )
+                        try:
+                            data = json.loads(line)
+                        except json.JSONDecodeError as exc:
+                            raise LLMInvalidResponseError(
+                                "Ollama returned an invalid streaming response."
+                            ) from exc
 
-                            if data.get("error"):
-                                raise LLMHTTPError(str(data["error"]))
+                        if not isinstance(data, dict):
+                            raise LLMInvalidResponseError(
+                                "Ollama returned an invalid streaming response."
+                            )
 
-                            message = data.get("message")
+                        if data.get("error"):
+                            raise LLMHTTPError(str(data["error"]))
 
-                            if message is None and data.get("done") is True:
-                                return
+                        message = data.get("message")
 
-                            if not isinstance(message, dict):
-                                raise LLMInvalidResponseError(
-                                    "Ollama streaming response is missing a message."
-                                )
+                        if message is None and data.get("done") is True:
+                            return
 
-                            content = message.get("content", "")
+                        if not isinstance(message, dict):
+                            raise LLMInvalidResponseError(
+                                "Ollama streaming response is missing a message."
+                            )
 
-                            if not isinstance(content, str):
-                                raise LLMInvalidResponseError(
-                                    "Ollama streaming content is invalid."
-                                )
+                        content = message.get("content", "")
 
-                            if content:
-                                emitted_chunk = True
-                                yield content
+                        if not isinstance(content, str):
+                            raise LLMInvalidResponseError("Ollama streaming content is invalid.")
 
-                            if data.get("done") is True:
-                                return
+                        if content:
+                            emitted_chunk = True
+                            yield content
 
-                raise LLMInvalidResponseError(
-                    "Ollama stream ended before completion."
-                )
+                        if data.get("done") is True:
+                            return
+
+                raise LLMInvalidResponseError("Ollama stream ended before completion.")
 
             except httpx.TimeoutException as exc:
                 if emitted_chunk or attempt >= self.max_retries:
@@ -140,13 +172,9 @@ class OllamaProvider(LLMProvider):
 
             except httpx.HTTPStatusError as exc:
                 if exc.response.status_code == 404:
-                    raise LLMModelNotFoundError(
-                        f"LLM model '{self.model}' was not found."
-                    ) from exc
+                    raise LLMModelNotFoundError(f"LLM model '{self.model}' was not found.") from exc
 
-                raise LLMHTTPError(
-                    f"Ollama returned HTTP {exc.response.status_code}."
-                ) from exc
+                raise LLMHTTPError(f"Ollama returned HTTP {exc.response.status_code}.") from exc
 
             except httpx.TransportError as exc:
                 if emitted_chunk or attempt >= self.max_retries:
@@ -165,6 +193,18 @@ class OllamaProvider(LLMProvider):
         messages: Sequence[LLMMessage],
         response_format: dict[str, Any] | None = None,
     ) -> LLMResponse:
+        async with self._semaphore:
+            return await self._generate_request(
+                messages=messages,
+                response_format=response_format,
+            )
+
+    async def _generate_request(
+        self,
+        *,
+        messages: Sequence[LLMMessage],
+        response_format: dict[str, Any] | None = None,
+    ) -> LLMResponse:
         payload: dict[str, Any] = {
             "model": self.model,
             "messages": [
@@ -175,6 +215,7 @@ class OllamaProvider(LLMProvider):
                 for message in messages
             ],
             "stream": False,
+            "keep_alive": self.keep_alive,
         }
 
         if response_format is not None:
@@ -182,20 +223,18 @@ class OllamaProvider(LLMProvider):
 
         for attempt in range(self.max_retries + 1):
             try:
-                async with httpx.AsyncClient(
-                    base_url=self.base_url,
-                    timeout=self.timeout,
-                ) as client:
-                    response = await client.post("/api/chat", json=payload)
-                    response.raise_for_status()
+                client = self._get_client()
+                response = await client.post(
+                    "/api/chat",
+                    json=payload,
+                )
+                response.raise_for_status()
 
                 try:
                     data = response.json()
                     content = data["message"]["content"]
                 except (ValueError, KeyError, TypeError) as exc:
-                    raise LLMInvalidResponseError(
-                        "Ollama returned an invalid response."
-                    ) from exc
+                    raise LLMInvalidResponseError("Ollama returned an invalid response.") from exc
 
                 return LLMResponse(
                     content=content,
@@ -213,13 +252,9 @@ class OllamaProvider(LLMProvider):
 
             except httpx.HTTPStatusError as exc:
                 if exc.response.status_code == 404:
-                    raise LLMModelNotFoundError(
-                        f"LLM model '{self.model}' was not found."
-                    ) from exc
+                    raise LLMModelNotFoundError(f"LLM model '{self.model}' was not found.") from exc
 
-                raise LLMHTTPError(
-                    f"Ollama returned HTTP {exc.response.status_code}."
-                ) from exc
+                raise LLMHTTPError(f"Ollama returned HTTP {exc.response.status_code}.") from exc
 
             except httpx.TransportError as exc:
                 if attempt >= self.max_retries:
