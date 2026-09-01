@@ -1,8 +1,10 @@
 ﻿from orbyntiq.agents.contracts import (
     AgentResult,
     AgentStatus,
+    MCPToolDecision,
     RoutingDecision,
 )
+from orbyntiq.agents.mcp_agent import MCPAgent
 from orbyntiq.agents.research import ResearchAgent
 from orbyntiq.agents.state import (
     AgentName,
@@ -18,6 +20,8 @@ __all__ = [
     "AgentRoute",
     "AgentState",
     "AgentStatus",
+    "MCPAgent",
+    "MCPToolDecision",
     "ResearchAgent",
     "RoutingDecision",
     "SupervisorAgent",

@@ -1,9 +1,10 @@
-﻿import pytest
+import pytest
 from pydantic import ValidationError
 
 from orbyntiq.agents.contracts import (
     AgentResult,
     AgentStatus,
+    MCPToolDecision,
     RoutingDecision,
 )
 
@@ -82,4 +83,26 @@ def test_routing_decision_requires_reason() -> None:
         RoutingDecision(
             route="general",
             reason="",
+        )
+
+def test_mcp_tool_decision_accepts_arguments() -> None:
+    decision = MCPToolDecision(
+        tool_name="search_knowledge",
+        arguments={
+            "query": "What is MCP?",
+            "limit": 3,
+        },
+        reason="Knowledge search is required.",
+    )
+
+    assert decision.tool_name == "search_knowledge"
+    assert decision.arguments["limit"] == 3
+
+
+def test_mcp_tool_decision_rejects_empty_tool_name() -> None:
+    with pytest.raises(ValidationError):
+        MCPToolDecision(
+            tool_name="",
+            arguments={},
+            reason="Invalid tool.",
         )

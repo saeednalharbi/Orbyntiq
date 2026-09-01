@@ -29,3 +29,11 @@ class RoutingDecision(BaseModel):
 
     route: AgentRoute
     reason: str = Field(min_length=1)
+
+
+class MCPToolDecision(BaseModel):
+    """Structured MCP tool selection produced by the LLM."""
+
+    tool_name: str = Field(min_length=1)
+    arguments: dict[str, Any] = Field(default_factory=dict)
+    reason: str = Field(min_length=1)
