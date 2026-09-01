@@ -1,5 +1,12 @@
-from dataclasses import dataclass
+from __future__ import annotations
 
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+from orbyntiq.observability.spans import (
+    bounded_name,
+    traced_span,
+)
 from orbyntiq.rag.prompts import (
     NO_CONTEXT_ANSWER,
     RAG_SYSTEM_PROMPT,
@@ -9,7 +16,10 @@ from orbyntiq.rag.retrieval import (
     RetrievedChunk,
     SemanticRetriever,
 )
-from orbyntiq.services import LLMService
+
+if TYPE_CHECKING:
+    from orbyntiq.services.llm_service import LLMService
+
 
 
 class RAGGenerationError(RuntimeError):
@@ -59,7 +69,9 @@ def _build_context(
             )
         )
 
-    return "\n\n".join(sections)
+    return "\n\n".join(
+        sections
+    )
 
 
 class RAGService:
@@ -83,61 +95,110 @@ class RAGService:
         normalized_question = question.strip()
 
         if not normalized_question:
-            raise ValueError("question cannot be empty")
+            raise ValueError(
+                "question cannot be empty"
+            )
 
-        chunks = await self._retriever.retrieve(
-            normalized_question,
-            limit=limit,
-            score_threshold=score_threshold,
-            filters=filters,
-        )
+        attributes: dict[str, object] = {
+            "orbyntiq.rag.limit": limit,
+            "orbyntiq.rag.filters_present": (
+                filters is not None
+            ),
+        }
 
-        if not chunks:
+        if score_threshold is not None:
+            attributes[
+                "orbyntiq.rag.score_threshold"
+            ] = score_threshold
+
+        with traced_span(
+            "rag.answer",
+            tracer_name="orbyntiq.rag",
+            attributes=attributes,
+        ) as span:
+            chunks = await self._retriever.retrieve(
+                normalized_question,
+                limit=limit,
+                score_threshold=score_threshold,
+                filters=filters,
+            )
+
+            span.set_attribute(
+                "orbyntiq.rag.result_count",
+                len(chunks),
+            )
+
+            if not chunks:
+                span.set_attribute(
+                    "orbyntiq.rag.status",
+                    "no_context",
+                )
+
+                return RAGAnswer(
+                    answer=NO_CONTEXT_ANSWER,
+                    sources=(),
+                    model=None,
+                )
+
+            context = _build_context(
+                chunks
+            )
+
+            prompt = (
+                "Answer the question using only the retrieved "
+                "context below.\n\n"
+                f"Question:\n{normalized_question}\n\n"
+                f"Retrieved context:\n{context}"
+            )
+
+            response = await self._llm_service.chat(
+                prompt,
+                system_prompt=RAG_SYSTEM_PROMPT,
+            )
+
+            answer = response.content.strip()
+
+            if not answer:
+                raise RAGGenerationError(
+                    "LLM returned an empty RAG answer"
+                )
+
+            sources = tuple(
+                RAGSource(
+                    citation=f"S{index}",
+                    document_id=chunk.document_id,
+                    file_name=chunk.file_name,
+                    source_path=chunk.source_path,
+                    chunk_index=chunk.chunk_index,
+                    score=chunk.score,
+                    page_number=chunk.page_number,
+                )
+                for index, chunk in enumerate(
+                    chunks,
+                    start=1,
+                )
+            )
+
+            span.set_attribute(
+                "orbyntiq.rag.source_count",
+                len(sources),
+            )
+
+            span.set_attribute(
+                "orbyntiq.rag.status",
+                "success",
+            )
+
+            span.set_attribute(
+                "gen_ai.response.model",
+                bounded_name(
+                    response.model,
+                    default="unknown",
+                ),
+            )
+
             return RAGAnswer(
-                answer=NO_CONTEXT_ANSWER,
-                sources=(),
-                model=None,
+                answer=answer,
+                sources=sources,
+                model=response.model,
             )
-
-        context = _build_context(chunks)
-
-        prompt = (
-            "Answer the question using only the retrieved "
-            "context below.\n\n"
-            f"Question:\n{normalized_question}\n\n"
-            f"Retrieved context:\n{context}"
-        )
-
-        response = await self._llm_service.chat(
-            prompt,
-            system_prompt=RAG_SYSTEM_PROMPT,
-        )
-
-        answer = response.content.strip()
-
-        if not answer:
-            raise RAGGenerationError(
-                "LLM returned an empty RAG answer"
-            )
-
-        sources = tuple(
-            RAGSource(
-                citation=f"S{index}",
-                document_id=chunk.document_id,
-                file_name=chunk.file_name,
-                source_path=chunk.source_path,
-                chunk_index=chunk.chunk_index,
-                score=chunk.score,
-                page_number=chunk.page_number,
-            )
-            for index, chunk in enumerate(
-                chunks,
-                start=1,
-            )
-        )
-
-        return RAGAnswer(
-            answer=answer,
-            sources=sources,
-            model=response.model,
-        )

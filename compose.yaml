@@ -1,4 +1,4 @@
-﻿services:
+services:
   api:
     build:
       context: .
@@ -7,8 +7,20 @@
     environment:
       ORBYNTIQ_API_HOST: 0.0.0.0
       ORBYNTIQ_API_PORT: "8000"
+      ORBYNTIQ_MONGODB_URL: mongodb://mongodb:27017
+      ORBYNTIQ_QDRANT_URL: http://qdrant:6333
+      ORBYNTIQ_OTEL_EXPORTER_ENABLED: "true"
+      ORBYNTIQ_OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      ORBYNTIQ_OTEL_EXPORTER_OTLP_INSECURE: "true"
     ports:
       - "8000:8000"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+      otel-collector:
+        condition: service_started
     healthcheck:
       test:
         [
@@ -19,7 +31,8 @@
         ]
       interval: 10s
       timeout: 5s
-      retries: 3
+      retries: 10
+      start_period: 20s
 
   mongodb:
     image: mongo:8.0
@@ -61,6 +74,69 @@
       retries: 5
       start_period: 10s
 
+  tempo:
+    image: grafana/tempo:3.0.3
+    container_name: orbyntiq-tempo
+    command:
+      - "-target=all"
+      - "-config.file=/etc/tempo.yaml"
+    volumes:
+      - ./infra/tempo/tempo.yaml:/etc/tempo.yaml:ro
+      - tempo_data:/var/tempo
+    ports:
+      - "127.0.0.1:3200:3200"
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.159.0
+    container_name: orbyntiq-otel-collector
+    command:
+      - "--config=/etc/otelcol-contrib/config.yaml"
+    volumes:
+      - ./infra/otel/collector-config.yaml:/etc/otelcol-contrib/config.yaml:ro
+    ports:
+      - "127.0.0.1:4317:4317"
+      - "127.0.0.1:4318:4318"
+      - "127.0.0.1:13133:13133"
+    depends_on:
+      - tempo
+
+  prometheus:
+    image: prom/prometheus:v3.14.0
+    container_name: orbyntiq-prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+    volumes:
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "127.0.0.1:9090:9090"
+    depends_on:
+      api:
+        condition: service_healthy
+
+  grafana:
+    image: grafana/grafana:13.2.0
+    container_name: orbyntiq-grafana
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./infra/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./infra/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./infra/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      - prometheus
+      - tempo
+
 volumes:
   mongodb_data:
   qdrant_data:
+  tempo_data:
+  prometheus_data:
+  grafana_data:

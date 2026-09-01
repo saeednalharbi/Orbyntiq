@@ -16,7 +16,13 @@ def get_llm_service() -> LLMService:
     settings = get_settings()
     provider = create_llm_provider(settings)
 
-    return LLMService(provider)
+    return LLMService(
+        provider,
+        metrics_enabled=(
+            settings.observability_enabled
+            and settings.metrics_enabled
+        ),
+    )
 
 
 def get_multi_agent_service(

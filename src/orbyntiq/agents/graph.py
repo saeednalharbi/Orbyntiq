@@ -1,4 +1,4 @@
-﻿from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable
 from typing import Any
 
 from langgraph.graph import END, START, StateGraph
@@ -6,6 +6,10 @@ from langgraph.graph import END, START, StateGraph
 from orbyntiq.agents.state import (
     AgentRoute,
     AgentState,
+)
+from orbyntiq.observability.spans import (
+    mark_span_error,
+    traced_span,
 )
 
 AgentNode = Callable[
@@ -37,6 +41,103 @@ def select_route(
     return route
 
 
+def _agent_result_status(
+    update: dict[str, Any],
+    agent_name: str,
+) -> str:
+    results = update.get(
+        "agent_results"
+    )
+
+    if not isinstance(
+        results,
+        list,
+    ):
+        return "success"
+
+    for result in reversed(results):
+        if not isinstance(
+            result,
+            dict,
+        ):
+            continue
+
+        if (
+            result.get("agent")
+            == agent_name
+        ):
+            status = result.get(
+                "status"
+            )
+
+            if status in {
+                "success",
+                "failed",
+            }:
+                return str(status)
+
+    return "success"
+
+
+def _instrument_agent_node(
+    agent_name: str,
+    node: AgentNode,
+) -> AgentNode:
+    async def traced_node(
+        state: AgentState,
+    ) -> dict[str, Any]:
+        with traced_span(
+            f"agent.{agent_name}",
+            tracer_name="orbyntiq.agents",
+            attributes={
+                "gen_ai.operation.name": "invoke_agent",
+                "gen_ai.agent.name": agent_name,
+                "orbyntiq.agent.name": agent_name,
+            },
+        ) as span:
+            update = await node(
+                state
+            )
+
+            status = _agent_result_status(
+                update,
+                agent_name,
+            )
+
+            span.set_attribute(
+                "orbyntiq.agent.status",
+                status,
+            )
+
+            if status == "failed":
+                mark_span_error(
+                    span,
+                    "AgentExecutionFailed",
+                )
+
+            route = update.get(
+                "route"
+            )
+
+            if (
+                agent_name == "supervisor"
+                and route
+                in {
+                    "research",
+                    "mcp",
+                    "general",
+                }
+            ):
+                span.set_attribute(
+                    "orbyntiq.agent.route",
+                    str(route),
+                )
+
+            return update
+
+    return traced_node
+
+
 def build_multi_agent_graph(
     *,
     supervisor: AgentNode,
@@ -47,31 +148,48 @@ def build_multi_agent_graph(
 ) -> Any:
     """Build and compile the Orbyntiq multi-agent LangGraph."""
 
-    graph = StateGraph(AgentState)
+    graph = StateGraph(
+        AgentState
+    )
 
     graph.add_node(
         "supervisor",
-        supervisor,
+        _instrument_agent_node(
+            "supervisor",
+            supervisor,
+        ),
     )
 
     graph.add_node(
         "research",
-        research,
+        _instrument_agent_node(
+            "research",
+            research,
+        ),
     )
 
     graph.add_node(
         "mcp",
-        mcp,
+        _instrument_agent_node(
+            "mcp",
+            mcp,
+        ),
     )
 
     graph.add_node(
         "general",
-        general,
+        _instrument_agent_node(
+            "general",
+            general,
+        ),
     )
 
     graph.add_node(
         "synthesizer",
-        synthesizer,
+        _instrument_agent_node(
+            "synthesizer",
+            synthesizer,
+        ),
     )
 
     graph.add_edge(

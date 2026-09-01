@@ -6,6 +6,21 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+
+    # Observability
+    observability_enabled: bool = True
+    metrics_enabled: bool = True
+    tracing_enabled: bool = True
+
+    otel_service_name: str = "orbyntiq-api"
+    otel_exporter_otlp_endpoint: str = "http://localhost:4317"
+    otel_exporter_enabled: bool = False
+    otel_exporter_otlp_insecure: bool = True
+    otel_export_timeout_seconds: float = 5.0
+    otel_trace_sample_ratio: float = 1.0
+
+    metrics_path: str = "/metrics"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

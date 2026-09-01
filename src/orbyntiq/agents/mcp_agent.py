@@ -12,6 +12,11 @@ from orbyntiq.agents.contracts import (
 )
 from orbyntiq.agents.state import AgentState
 from orbyntiq.mcp.server import mcp_server
+from orbyntiq.observability.spans import (
+    bounded_name,
+    mark_span_error,
+    traced_span,
+)
 from orbyntiq.services import LLMService
 
 MCP_AGENT_SYSTEM_PROMPT = """
@@ -120,8 +125,17 @@ class MCPAgent:
 
         try:
             async with Client(self._server) as client:
-                tool_result = await client.list_tools()
-                tools = tool_result.tools
+                with traced_span(
+                    "mcp.list_tools",
+                    tracer_name="orbyntiq.mcp",
+                ) as list_span:
+                    tool_result = await client.list_tools()
+                    tools = tool_result.tools
+
+                    list_span.set_attribute(
+                        "orbyntiq.mcp.tool_count",
+                        len(tools),
+                    )
 
                 if not tools:
                     return _failure_update(
@@ -154,10 +168,35 @@ class MCPAgent:
                         },
                     )
 
-                result = await client.call_tool(
+                tool_name = bounded_name(
                     decision.tool_name,
-                    decision.arguments,
+                    default="unknown",
                 )
+
+                with traced_span(
+                    "mcp.call_tool",
+                    tracer_name="orbyntiq.mcp",
+                    attributes={
+                        "gen_ai.operation.name": "execute_tool",
+                        "gen_ai.tool.name": tool_name,
+                        "orbyntiq.mcp.tool.name": tool_name,
+                    },
+                ) as tool_span:
+                    result = await client.call_tool(
+                        decision.tool_name,
+                        decision.arguments,
+                    )
+
+                    tool_span.set_attribute(
+                        "orbyntiq.mcp.tool.is_error",
+                        bool(result.is_error),
+                    )
+
+                    if result.is_error:
+                        mark_span_error(
+                            tool_span,
+                            "MCPToolError",
+                        )
 
         except MCPError as exc:
             return _failure_update(

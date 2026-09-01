@@ -14,6 +14,10 @@ from orbyntiq.agents import (
 )
 from orbyntiq.api.dependencies import get_llm_service
 from orbyntiq.api.error_handlers import register_error_handlers
+from orbyntiq.api.middleware import (
+    RequestIDMiddleware,
+    RequestLoggingMiddleware,
+)
 from orbyntiq.api.routes.agents import router as agents_router
 from orbyntiq.api.routes.llm import router as llm_router
 from orbyntiq.api.routes.websocket import router as websocket_router
@@ -43,6 +47,13 @@ from orbyntiq.core.redis import (
 )
 from orbyntiq.mcp.runtime import configure_mcp_services
 from orbyntiq.mcp.server import mcp_server
+from orbyntiq.observability import (
+    MetricsMiddleware,
+    TracingMiddleware,
+    configure_tracing,
+    register_metrics_endpoint,
+)
+from orbyntiq.observability.agent_metrics import InstrumentedMultiAgentService
 from orbyntiq.persistence import (
     AgentExecutionRepository,
     WorkflowHistoryRepository,
@@ -203,10 +214,16 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
                 synthesizer=SynthesizerAgent(llm_service),
             )
 
-            app.state.multi_agent_service = MultiAgentService(
-                graph,
-                execution_repository=execution_repository,
-                workflow_repository=workflow_repository,
+            app.state.multi_agent_service = InstrumentedMultiAgentService(
+                MultiAgentService(
+                    graph,
+                    execution_repository=execution_repository,
+                    workflow_repository=workflow_repository,
+                ),
+                metrics_enabled=(
+                    settings.observability_enabled
+                    and settings.metrics_enabled
+                ),
             )
 
             logger.info("Multi-agent service configured")
@@ -257,6 +274,10 @@ app = FastAPI(
     lifespan=application_lifespan,
 )
 
+tracer_provider = configure_tracing(settings)
+
+register_metrics_endpoint(app, settings)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -266,8 +287,26 @@ app.add_middleware(
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
-    expose_headers=["Mcp-Session-Id"],
+    expose_headers=["Mcp-Session-Id", "X-Request-ID", "X-Trace-ID"],
 )
+
+if (
+    settings.observability_enabled
+    and settings.metrics_enabled
+):
+    app.add_middleware(
+        MetricsMiddleware,
+        metrics_path=settings.metrics_path,
+    )
+
+app.add_middleware(RequestLoggingMiddleware)
+app.add_middleware(RequestIDMiddleware)
+
+if tracer_provider is not None:
+    app.add_middleware(
+        TracingMiddleware,
+        tracer_provider=tracer_provider,
+    )
 
 register_error_handlers(app)
 
