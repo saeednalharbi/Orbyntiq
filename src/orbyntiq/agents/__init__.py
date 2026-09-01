@@ -3,6 +3,7 @@
     AgentStatus,
     RoutingDecision,
 )
+from orbyntiq.agents.research import ResearchAgent
 from orbyntiq.agents.state import (
     AgentName,
     AgentRoute,
@@ -17,6 +18,7 @@ __all__ = [
     "AgentRoute",
     "AgentState",
     "AgentStatus",
+    "ResearchAgent",
     "RoutingDecision",
     "SupervisorAgent",
     "create_initial_state",
