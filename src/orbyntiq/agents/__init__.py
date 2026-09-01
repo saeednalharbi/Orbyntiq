@@ -9,6 +9,7 @@ from orbyntiq.agents.state import (
     AgentState,
     create_initial_state,
 )
+from orbyntiq.agents.supervisor import SupervisorAgent
 
 __all__ = [
     "AgentName",
@@ -17,5 +18,6 @@ __all__ = [
     "AgentState",
     "AgentStatus",
     "RoutingDecision",
+    "SupervisorAgent",
     "create_initial_state",
 ]
