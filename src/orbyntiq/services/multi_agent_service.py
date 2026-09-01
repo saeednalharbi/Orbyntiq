@@ -1,4 +1,4 @@
-﻿from dataclasses import dataclass
+from dataclasses import dataclass
 from typing import Any, Protocol, cast
 from uuid import uuid4
 
@@ -7,6 +7,10 @@ from orbyntiq.agents.state import (
     AgentState,
     create_initial_state,
 )
+
+
+class MultiAgentUnavailableError(RuntimeError):
+    """Raised when the multi-agent runtime is unavailable."""
 
 
 class MultiAgentExecutionError(RuntimeError):

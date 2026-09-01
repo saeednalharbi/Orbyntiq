@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request
+﻿from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from orbyntiq.llm.errors import (
@@ -7,6 +7,10 @@ from orbyntiq.llm.errors import (
     LLMInvalidResponseError,
     LLMModelNotFoundError,
     LLMTimeoutError,
+)
+from orbyntiq.services import (
+    MultiAgentExecutionError,
+    MultiAgentUnavailableError,
 )
 
 
@@ -38,7 +42,11 @@ def register_error_handlers(app: FastAPI) -> None:
     ) -> JSONResponse:
         return JSONResponse(
             status_code=503,
-            content={"detail": "The configured local LLM model is unavailable."},
+            content={
+                "detail": (
+                    "The configured local LLM model is unavailable."
+                )
+            },
         )
 
     @app.exception_handler(LLMHTTPError)
@@ -48,7 +56,9 @@ def register_error_handlers(app: FastAPI) -> None:
     ) -> JSONResponse:
         return JSONResponse(
             status_code=502,
-            content={"detail": "The local LLM returned an upstream error."},
+            content={
+                "detail": "The local LLM returned an upstream error."
+            },
         )
 
     @app.exception_handler(LLMInvalidResponseError)
@@ -58,5 +68,31 @@ def register_error_handlers(app: FastAPI) -> None:
     ) -> JSONResponse:
         return JSONResponse(
             status_code=502,
-            content={"detail": "The local LLM returned an invalid response."},
+            content={
+                "detail": "The local LLM returned an invalid response."
+            },
+        )
+
+    @app.exception_handler(MultiAgentUnavailableError)
+    async def multi_agent_unavailable_handler(
+        request: Request,
+        exc: MultiAgentUnavailableError,
+    ) -> JSONResponse:
+        return JSONResponse(
+            status_code=503,
+            content={
+                "detail": "The multi-agent service is unavailable."
+            },
+        )
+
+    @app.exception_handler(MultiAgentExecutionError)
+    async def multi_agent_execution_handler(
+        request: Request,
+        exc: MultiAgentExecutionError,
+    ) -> JSONResponse:
+        return JSONResponse(
+            status_code=500,
+            content={
+                "detail": "The multi-agent execution failed."
+            },
         )

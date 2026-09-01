@@ -3,6 +3,7 @@ from orbyntiq.services.multi_agent_service import (
     MultiAgentExecution,
     MultiAgentExecutionError,
     MultiAgentService,
+    MultiAgentUnavailableError,
 )
 
 __all__ = [
@@ -10,4 +11,5 @@ __all__ = [
     "MultiAgentExecution",
     "MultiAgentExecutionError",
     "MultiAgentService",
+    "MultiAgentUnavailableError",
 ]

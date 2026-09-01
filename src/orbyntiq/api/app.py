@@ -4,8 +4,17 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from orbyntiq.agents import (
+    GeneralAgent,
+    MCPAgent,
+    ResearchAgent,
+    SupervisorAgent,
+    SynthesizerAgent,
+    build_multi_agent_graph,
+)
 from orbyntiq.api.dependencies import get_llm_service
 from orbyntiq.api.error_handlers import register_error_handlers
+from orbyntiq.api.routes.agents import router as agents_router
 from orbyntiq.api.routes.llm import router as llm_router
 from orbyntiq.api.routes.websocket import router as websocket_router
 from orbyntiq.core.config import get_settings
@@ -37,6 +46,7 @@ from orbyntiq.mcp.server import mcp_server
 from orbyntiq.rag.embeddings import create_embedding_provider
 from orbyntiq.rag.retrieval import SemanticRetriever
 from orbyntiq.rag.service import RAGService
+from orbyntiq.services import MultiAgentService
 
 settings = get_settings()
 
@@ -59,6 +69,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     redis_connected = False
     mongodb_connected = False
     qdrant_connected = False
+    embedding_provider = None
 
     app.state.redis = None
     app.state.redis_available = False
@@ -69,6 +80,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
     app.state.qdrant = None
     app.state.qdrant_available = False
+    app.state.multi_agent_service = None
 
     configure_mcp_services()
 
@@ -152,9 +164,30 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
             logger.info("MCP RAG services configured")
 
+            llm_service = get_llm_service()
+
+            graph = build_multi_agent_graph(
+                supervisor=SupervisorAgent(llm_service),
+                research=ResearchAgent(rag_service),
+                mcp=MCPAgent(llm_service),
+                general=GeneralAgent(llm_service),
+                synthesizer=SynthesizerAgent(llm_service),
+            )
+
+            app.state.multi_agent_service = MultiAgentService(
+                graph
+            )
+
+            logger.info("Multi-agent service configured")
+
         yield
     finally:
         configure_mcp_services()
+        app.state.multi_agent_service = None
+
+        if embedding_provider is not None:
+            await embedding_provider.close()
+            logger.info("Embedding provider closed")
 
         if qdrant_connected:
             await close_qdrant_client(qdrant_client)
@@ -207,6 +240,7 @@ app.add_middleware(
 
 register_error_handlers(app)
 
+app.include_router(agents_router)
 app.include_router(llm_router)
 app.include_router(websocket_router)
 
