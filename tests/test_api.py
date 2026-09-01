@@ -1,6 +1,7 @@
 from fastapi.testclient import TestClient
 
 from orbyntiq.api.app import app
+from orbyntiq.core.config import get_settings
 
 client = TestClient(app)
 
@@ -13,5 +14,5 @@ def test_health_check():
     assert response.json() == {
         "status": "healthy",
         "service": "Orbyntiq",
-        "environment": "development",
+        "environment": get_settings().environment,
     }
