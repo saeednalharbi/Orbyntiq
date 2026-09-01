@@ -27,7 +27,7 @@ def test_create_qdrant_client_uses_settings():
     assert client is expected_client
 
     client_class.assert_called_once_with(
-        url="http://localhost:6333",
+        url=settings.qdrant_url,
         grpc_port=6334,
         prefer_grpc=False,
         timeout=5.0,
