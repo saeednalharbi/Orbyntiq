@@ -15,6 +15,8 @@ COPY src ./src
 
 RUN python -m pip wheel \
     --wheel-dir /wheels \
+    "setuptools==84.0.0" \
+    "wheel==0.48.0" \
     .
 
 
@@ -48,6 +50,8 @@ RUN python -m pip install \
         --no-cache-dir \
         --no-index \
         --find-links=/wheels \
+        "setuptools==84.0.0" \
+        "wheel==0.48.0" \
         orbyntiq \
     && rm -rf /wheels
 
