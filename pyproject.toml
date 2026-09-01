@@ -17,6 +17,7 @@ dependencies = [
     "qdrant-client==1.19.0",
     "redis>=5.0,<7.0",
     "mcp[cli]==2.1.1",
+    "langgraph>=1.2,<1.3",
     "uvicorn[standard]>=0.30,<1.0"
 ]
 
