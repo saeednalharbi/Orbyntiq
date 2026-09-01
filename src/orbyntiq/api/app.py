@@ -43,6 +43,10 @@ from orbyntiq.core.redis import (
 )
 from orbyntiq.mcp.runtime import configure_mcp_services
 from orbyntiq.mcp.server import mcp_server
+from orbyntiq.persistence import (
+    AgentExecutionRepository,
+    WorkflowHistoryRepository,
+)
 from orbyntiq.rag.embeddings import create_embedding_provider
 from orbyntiq.rag.retrieval import SemanticRetriever
 from orbyntiq.rag.service import RAGService
@@ -70,6 +74,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     mongodb_connected = False
     qdrant_connected = False
     embedding_provider = None
+    execution_repository = None
+    workflow_repository = None
 
     app.state.redis = None
     app.state.redis_available = False
@@ -126,6 +132,29 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
                 app.state.mongodb_available = True
                 mongodb_connected = True
 
+                try:
+                    execution_repository = (
+                        AgentExecutionRepository(
+                            mongodb_database
+                        )
+                    )
+
+                    workflow_repository = (
+                        WorkflowHistoryRepository(
+                            mongodb_database
+                        )
+                    )
+                except (TypeError, AttributeError) as exc:
+                    execution_repository = None
+                    workflow_repository = None
+
+                    logger.warning(
+                        "Multi-agent persistence repositories "
+                        "unavailable; application continuing "
+                        "without execution persistence: %s",
+                        exc,
+                    )
+
                 logger.info("MongoDB connection established")
                 logger.info("MongoDB schema initialized")
 
@@ -175,7 +204,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             )
 
             app.state.multi_agent_service = MultiAgentService(
-                graph
+                graph,
+                execution_repository=execution_repository,
+                workflow_repository=workflow_repository,
             )
 
             logger.info("Multi-agent service configured")

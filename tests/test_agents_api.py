@@ -15,10 +15,12 @@ class FakeMultiAgentService:
         user_query: str,
         *,
         request_id: str | None = None,
+        conversation_id: str | None = None,
         max_hops: int = 8,
     ) -> MultiAgentExecution:
         assert user_query == "Explain embeddings."
         assert request_id == "request-api-123"
+        assert conversation_id is None
         assert max_hops == 6
 
         return MultiAgentExecution(
@@ -40,9 +42,10 @@ class FailingMultiAgentService:
         user_query: str,
         *,
         request_id: str | None = None,
+        conversation_id: str | None = None,
         max_hops: int = 8,
     ) -> MultiAgentExecution:
-        del user_query, request_id, max_hops
+        del user_query, request_id, conversation_id, max_hops
 
         raise MultiAgentExecutionError(
             "Execution failed."

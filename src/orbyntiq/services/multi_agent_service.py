@@ -1,4 +1,5 @@
-from dataclasses import dataclass
+﻿from dataclasses import dataclass
+from datetime import UTC, datetime
 from typing import Any, Protocol, cast
 from uuid import uuid4
 
@@ -6,6 +7,13 @@ from orbyntiq.agents.state import (
     AgentRoute,
     AgentState,
     create_initial_state,
+)
+from orbyntiq.persistence import (
+    AgentExecution,
+    AgentExecutionRepository,
+    RepositoryError,
+    WorkflowHistory,
+    WorkflowHistoryRepository,
 )
 
 
@@ -47,14 +55,99 @@ class MultiAgentService:
     def __init__(
         self,
         graph: MultiAgentGraph,
+        *,
+        execution_repository: AgentExecutionRepository | None = None,
+        workflow_repository: WorkflowHistoryRepository | None = None,
     ) -> None:
+        if (
+            execution_repository is None
+        ) != (
+            workflow_repository is None
+        ):
+            raise ValueError(
+                "execution_repository and workflow_repository "
+                "must be configured together"
+            )
+
         self._graph = graph
+        self._execution_repository = execution_repository
+        self._workflow_repository = workflow_repository
+
+    def _persistence_enabled(
+        self,
+        conversation_id: str | None,
+    ) -> bool:
+        return (
+            conversation_id is not None
+            and self._execution_repository is not None
+            and self._workflow_repository is not None
+        )
+
+    async def _create_workflow_event(
+        self,
+        *,
+        execution_id: str,
+        conversation_id: str,
+        sequence: int,
+        event_type: str,
+        agent_name: str | None = None,
+        payload: dict[str, Any] | None = None,
+    ) -> None:
+        if self._workflow_repository is None:
+            return
+
+        await self._workflow_repository.create(
+            WorkflowHistory(
+                execution_id=execution_id,
+                conversation_id=conversation_id,
+                sequence=sequence,
+                event_type=event_type,
+                agent_name=agent_name,
+                payload=payload or {},
+            )
+        )
+
+    async def _persist_failure(
+        self,
+        execution: AgentExecution,
+        *,
+        sequence: int,
+        error: str,
+    ) -> None:
+        if (
+            self._execution_repository is None
+            or self._workflow_repository is None
+        ):
+            return
+
+        await self._create_workflow_event(
+            execution_id=execution.id,
+            conversation_id=execution.conversation_id,
+            sequence=sequence,
+            event_type="execution_failed",
+            payload={
+                "error": error,
+            },
+        )
+
+        failed_execution = execution.model_copy(
+            update={
+                "status": "failed",
+                "error": error,
+                "completed_at": datetime.now(UTC),
+            }
+        )
+
+        await self._execution_repository.replace(
+            failed_execution
+        )
 
     async def execute(
         self,
         user_query: str,
         *,
         request_id: str | None = None,
+        conversation_id: str | None = None,
         max_hops: int = 8,
     ) -> MultiAgentExecution:
         """Execute one multi-agent request."""
@@ -67,13 +160,75 @@ class MultiAgentService:
             max_hops=max_hops,
         )
 
+        persisted_execution: AgentExecution | None = None
+        next_sequence = 0
+
+        if self._persistence_enabled(
+            conversation_id
+        ):
+            assert conversation_id is not None
+            assert self._execution_repository is not None
+
+            persisted_execution = AgentExecution(
+                id=execution_id,
+                conversation_id=conversation_id,
+                agent_name="multi_agent",
+                status="running",
+                input={
+                    "user_query": initial_state["user_query"],
+                    "request_id": initial_state["request_id"],
+                    "max_hops": max_hops,
+                },
+                started_at=datetime.now(UTC),
+            )
+
+            try:
+                await self._execution_repository.create(
+                    persisted_execution
+                )
+
+                await self._create_workflow_event(
+                    execution_id=execution_id,
+                    conversation_id=conversation_id,
+                    sequence=next_sequence,
+                    event_type="execution_started",
+                    agent_name="supervisor",
+                    payload={
+                        "request_id":
+                            initial_state["request_id"],
+                        "user_query":
+                            initial_state["user_query"],
+                    },
+                )
+
+                next_sequence += 1
+
+            except RepositoryError as exc:
+                raise MultiAgentExecutionError(
+                    "Failed to persist multi-agent execution start."
+                ) from exc
+
         try:
             result = await self._graph.ainvoke(
                 initial_state
             )
         except Exception as exc:
-            raise MultiAgentExecutionError(
+            error = (
                 "Multi-agent graph execution failed."
+            )
+
+            if persisted_execution is not None:
+                try:
+                    await self._persist_failure(
+                        persisted_execution,
+                        sequence=next_sequence,
+                        error=error,
+                    )
+                except RepositoryError:
+                    pass
+
+            raise MultiAgentExecutionError(
+                error
             ) from exc
 
         route = result.get("route")
@@ -83,8 +238,22 @@ class MultiAgentService:
             "mcp",
             "general",
         }:
-            raise MultiAgentExecutionError(
+            error = (
                 "Multi-agent execution returned an invalid route."
+            )
+
+            if persisted_execution is not None:
+                try:
+                    await self._persist_failure(
+                        persisted_execution,
+                        sequence=next_sequence,
+                        error=error,
+                    )
+                except RepositoryError:
+                    pass
+
+            raise MultiAgentExecutionError(
+                error
             )
 
         final_response = str(
@@ -95,8 +264,22 @@ class MultiAgentService:
         ).strip()
 
         if not final_response:
-            raise MultiAgentExecutionError(
+            error = (
                 "Multi-agent execution returned no final response."
+            )
+
+            if persisted_execution is not None:
+                try:
+                    await self._persist_failure(
+                        persisted_execution,
+                        sequence=next_sequence,
+                        error=error,
+                    )
+                except RepositoryError:
+                    pass
+
+            raise MultiAgentExecutionError(
+                error
             )
 
         resolved_request_id = str(
@@ -142,7 +325,7 @@ class MultiAgentService:
             if isinstance(agent_result, dict)
         )
 
-        return MultiAgentExecution(
+        execution = MultiAgentExecution(
             execution_id=execution_id,
             request_id=resolved_request_id,
             route=cast(
@@ -161,3 +344,110 @@ class MultiAgentService:
                 )
             ),
         )
+
+        if persisted_execution is not None:
+            assert self._execution_repository is not None
+
+            try:
+                await self._create_workflow_event(
+                    execution_id=execution_id,
+                    conversation_id=(
+                        persisted_execution.conversation_id
+                    ),
+                    sequence=next_sequence,
+                    event_type="routing_completed",
+                    agent_name="supervisor",
+                    payload={
+                        "route": execution.route,
+                        "route_reason":
+                            execution.route_reason,
+                    },
+                )
+
+                next_sequence += 1
+
+                for agent_result in agent_results:
+                    agent_name_value = agent_result.get(
+                        "agent"
+                    )
+
+                    agent_name = (
+                        None
+                        if agent_name_value is None
+                        else str(agent_name_value)
+                    )
+
+                    await self._create_workflow_event(
+                        execution_id=execution_id,
+                        conversation_id=(
+                            persisted_execution.conversation_id
+                        ),
+                        sequence=next_sequence,
+                        event_type="agent_result",
+                        agent_name=agent_name,
+                        payload=agent_result,
+                    )
+
+                    next_sequence += 1
+
+                await self._create_workflow_event(
+                    execution_id=execution_id,
+                    conversation_id=(
+                        persisted_execution.conversation_id
+                    ),
+                    sequence=next_sequence,
+                    event_type="execution_completed",
+                    agent_name="synthesizer",
+                    payload={
+                        "route": execution.route,
+                        "hop_count":
+                            execution.hop_count,
+                        "final_response":
+                            execution.final_response,
+                        "errors":
+                            list(execution.errors),
+                        "sources":
+                            list(execution.sources),
+                    },
+                )
+
+                completed_execution = (
+                    persisted_execution.model_copy(
+                        update={
+                            "status": "completed",
+                            "output": {
+                                "request_id":
+                                    execution.request_id,
+                                "route":
+                                    execution.route,
+                                "route_reason":
+                                    execution.route_reason,
+                                "final_response":
+                                    execution.final_response,
+                                "sources":
+                                    list(execution.sources),
+                                "errors":
+                                    list(execution.errors),
+                                "agent_results":
+                                    list(
+                                        execution.agent_results
+                                    ),
+                                "hop_count":
+                                    execution.hop_count,
+                            },
+                            "completed_at":
+                                datetime.now(UTC),
+                        }
+                    )
+                )
+
+                await self._execution_repository.replace(
+                    completed_execution
+                )
+
+            except RepositoryError as exc:
+                raise MultiAgentExecutionError(
+                    "Failed to persist multi-agent execution result."
+                ) from exc
+
+        return execution

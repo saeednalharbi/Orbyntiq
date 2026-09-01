@@ -441,6 +441,27 @@ class AgentExecutionRepository:
 
         return execution
 
+    async def replace(
+        self,
+        execution: AgentExecution,
+    ) -> AgentExecution:
+        try:
+            result = await self._collection.replace_one(
+                {"_id": execution.id},
+                _model_document(execution),
+            )
+        except PyMongoError as exc:
+            raise RepositoryError(
+                "Failed to replace agent execution"
+            ) from exc
+
+        if result.matched_count != 1:
+            raise RepositoryError(
+                "Agent execution does not exist"
+            )
+
+        return execution
+
     async def get(
         self,
         execution_id: str,

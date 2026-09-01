@@ -26,6 +26,7 @@ RequestId = Annotated[
 class AgentExecuteRequest(BaseModel):
     query: AgentQuery
     request_id: RequestId | None = None
+    conversation_id: RequestId | None = None
     max_hops: int = Field(
         default=8,
         ge=1,

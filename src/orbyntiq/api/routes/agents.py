@@ -29,6 +29,7 @@ async def execute_agent_request(
     execution = await service.execute(
         request.query,
         request_id=request.request_id,
+        conversation_id=request.conversation_id,
         max_hops=request.max_hops,
     )
 
