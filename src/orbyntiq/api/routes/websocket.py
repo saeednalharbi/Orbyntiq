@@ -6,6 +6,10 @@ from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
 from pydantic import ValidationError
 
 from orbyntiq.api.dependencies import get_llm_service
+from orbyntiq.api.schemas.agent_websocket import (
+    AgentExecuteWebSocketRequest,
+    AgentWorkflowEvent,
+)
 from orbyntiq.api.schemas.websocket import (
     CancelStreamRequest,
     ChatStreamRequest,
@@ -20,7 +24,7 @@ from orbyntiq.api.schemas.websocket import (
 from orbyntiq.api.websocket_manager import connection_manager
 from orbyntiq.core.config import get_settings
 from orbyntiq.core.logging import get_logger
-from orbyntiq.services import LLMService
+from orbyntiq.services import LLMService, MultiAgentService
 
 router = APIRouter(
     prefix="/api/v1/ws",
@@ -131,6 +135,63 @@ async def _stream_chat_response(
             request_id=request.request_id,
             message="LLM streaming request failed.",
             code="stream_error",
+        )
+
+        await _send_event(
+            websocket,
+            error_event.model_dump(),
+        )
+
+
+async def _execute_multi_agent_response(
+    websocket: WebSocket,
+    service: MultiAgentService,
+    request: AgentExecuteWebSocketRequest,
+) -> None:
+    """Execute the agent graph and publish workflow events."""
+
+    async def send_workflow_event(
+        event: dict[str, Any],
+    ) -> None:
+        websocket_event = AgentWorkflowEvent(
+            type="agent_event",
+            **event,
+        )
+
+        await _send_event(
+            websocket,
+            websocket_event.model_dump(),
+        )
+
+    try:
+        await service.execute(
+            request.query,
+            request_id=request.request_id,
+            conversation_id=request.conversation_id,
+            max_hops=request.max_hops,
+            event_callback=send_workflow_event,
+        )
+
+    except asyncio.CancelledError:
+        raise
+
+    except WebSocketDisconnect:
+        logger.info(
+            "Client disconnected while multi-agent request %s "
+            "was executing.",
+            request.request_id,
+        )
+
+    except Exception:
+        logger.exception(
+            "WebSocket multi-agent execution failed for request %s.",
+            request.request_id,
+        )
+
+        error_event = StreamErrorEvent(
+            request_id=request.request_id,
+            message="Multi-agent execution failed.",
+            code="agent_execution_error",
         )
 
         await _send_event(
@@ -267,6 +328,84 @@ async def chat_websocket(
                 await _send_event(
                     websocket,
                     cancelled_event.model_dump(),
+                )
+
+                continue
+
+            if message_type == "agent_execute":
+                try:
+                    agent_request = (
+                        AgentExecuteWebSocketRequest.model_validate(
+                            data
+                        )
+                    )
+                except ValidationError:
+                    event = StreamErrorEvent(
+                        request_id=request_id,
+                        message=(
+                            "Invalid multi-agent WebSocket request."
+                        ),
+                        code="invalid_request",
+                    )
+
+                    await _send_event(
+                        websocket,
+                        event.model_dump(),
+                    )
+
+                    continue
+
+                if (
+                    active_task is not None
+                    and not active_task.done()
+                ):
+                    event = StreamErrorEvent(
+                        request_id=agent_request.request_id,
+                        message=(
+                            "Another stream is already active."
+                        ),
+                        code="stream_in_progress",
+                    )
+
+                    await _send_event(
+                        websocket,
+                        event.model_dump(),
+                    )
+
+                    continue
+
+                multi_agent_service = getattr(
+                    websocket.app.state,
+                    "multi_agent_service",
+                    None,
+                )
+
+                if multi_agent_service is None:
+                    event = StreamErrorEvent(
+                        request_id=agent_request.request_id,
+                        message=(
+                            "Multi-agent service is unavailable."
+                        ),
+                        code="agent_unavailable",
+                    )
+
+                    await _send_event(
+                        websocket,
+                        event.model_dump(),
+                    )
+
+                    continue
+
+                active_request_id = (
+                    agent_request.request_id
+                )
+
+                active_task = asyncio.create_task(
+                    _execute_multi_agent_response(
+                        websocket,
+                        multi_agent_service,
+                        agent_request,
+                    )
                 )
 
                 continue

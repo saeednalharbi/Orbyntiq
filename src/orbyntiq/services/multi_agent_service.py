@@ -1,4 +1,6 @@
-﻿from dataclasses import dataclass
+﻿import asyncio
+from collections.abc import Awaitable, Callable
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any, Protocol, cast
 from uuid import uuid4
@@ -32,6 +34,12 @@ class MultiAgentGraph(Protocol):
         self,
         input: AgentState,
     ) -> dict[str, Any]: ...
+
+
+MultiAgentEventCallback = Callable[
+    [dict[str, Any]],
+    Awaitable[None],
+]
 
 
 @dataclass(frozen=True, slots=True)
@@ -82,6 +90,38 @@ class MultiAgentService:
             and self._execution_repository is not None
             and self._workflow_repository is not None
         )
+
+    async def _emit_event(
+        self,
+        callback: MultiAgentEventCallback | None,
+        *,
+        execution_id: str,
+        request_id: str,
+        sequence: int,
+        event_type: str,
+        agent_name: str | None = None,
+        payload: dict[str, Any] | None = None,
+    ) -> None:
+        """Publish an optional best-effort execution event."""
+
+        if callback is None:
+            return
+
+        event = {
+            "request_id": request_id,
+            "execution_id": execution_id,
+            "sequence": sequence,
+            "event_type": event_type,
+            "agent_name": agent_name,
+            "payload": payload or {},
+        }
+
+        try:
+            await callback(event)
+        except Exception:
+            # Event delivery must never corrupt the underlying
+            # multi-agent execution or MongoDB persistence.
+            return
 
     async def _create_workflow_event(
         self,
@@ -149,6 +189,7 @@ class MultiAgentService:
         request_id: str | None = None,
         conversation_id: str | None = None,
         max_hops: int = 8,
+        event_callback: MultiAgentEventCallback | None = None,
     ) -> MultiAgentExecution:
         """Execute one multi-agent request."""
 
@@ -201,17 +242,58 @@ class MultiAgentService:
                     },
                 )
 
-                next_sequence += 1
-
             except RepositoryError as exc:
                 raise MultiAgentExecutionError(
                     "Failed to persist multi-agent execution start."
                 ) from exc
 
+        await self._emit_event(
+            event_callback,
+            execution_id=execution_id,
+            request_id=initial_state["request_id"],
+            sequence=next_sequence,
+            event_type="execution_started",
+            agent_name="supervisor",
+            payload={
+                "request_id": initial_state["request_id"],
+                "user_query": initial_state["user_query"],
+            },
+        )
+
+        next_sequence += 1
+
         try:
             result = await self._graph.ainvoke(
                 initial_state
             )
+        except asyncio.CancelledError:
+            error = (
+                "Multi-agent execution cancelled."
+            )
+
+            if persisted_execution is not None:
+                try:
+                    await self._persist_failure(
+                        persisted_execution,
+                        sequence=next_sequence,
+                        error=error,
+                    )
+                except RepositoryError:
+                    pass
+
+            await self._emit_event(
+                event_callback,
+                execution_id=execution_id,
+                request_id=initial_state["request_id"],
+                sequence=next_sequence,
+                event_type="execution_failed",
+                payload={
+                    "error": error,
+                },
+            )
+
+            raise
+
         except Exception as exc:
             error = (
                 "Multi-agent graph execution failed."
@@ -226,6 +308,17 @@ class MultiAgentService:
                     )
                 except RepositoryError:
                     pass
+
+            await self._emit_event(
+                event_callback,
+                execution_id=execution_id,
+                request_id=initial_state["request_id"],
+                sequence=next_sequence,
+                event_type="execution_failed",
+                payload={
+                    "error": error,
+                },
+            )
 
             raise MultiAgentExecutionError(
                 error
@@ -252,6 +345,17 @@ class MultiAgentService:
                 except RepositoryError:
                     pass
 
+            await self._emit_event(
+                event_callback,
+                execution_id=execution_id,
+                request_id=initial_state["request_id"],
+                sequence=next_sequence,
+                event_type="execution_failed",
+                payload={
+                    "error": error,
+                },
+            )
+
             raise MultiAgentExecutionError(
                 error
             )
@@ -277,6 +381,17 @@ class MultiAgentService:
                     )
                 except RepositoryError:
                     pass
+
+            await self._emit_event(
+                event_callback,
+                execution_id=execution_id,
+                request_id=initial_state["request_id"],
+                sequence=next_sequence,
+                event_type="execution_failed",
+                payload={
+                    "error": error,
+                },
+            )
 
             raise MultiAgentExecutionError(
                 error
@@ -449,5 +564,64 @@ class MultiAgentService:
                 raise MultiAgentExecutionError(
                     "Failed to persist multi-agent execution result."
                 ) from exc
+
+        event_sequence = 1
+
+        await self._emit_event(
+            event_callback,
+            execution_id=execution.execution_id,
+            request_id=execution.request_id,
+            sequence=event_sequence,
+            event_type="routing_completed",
+            agent_name="supervisor",
+            payload={
+                "route": execution.route,
+                "route_reason": execution.route_reason,
+            },
+        )
+
+        event_sequence += 1
+
+        for agent_result in execution.agent_results:
+            agent_name_value = agent_result.get(
+                "agent"
+            )
+
+            agent_name = (
+                None
+                if agent_name_value is None
+                else str(agent_name_value)
+            )
+
+            await self._emit_event(
+                event_callback,
+                execution_id=execution.execution_id,
+                request_id=execution.request_id,
+                sequence=event_sequence,
+                event_type="agent_result",
+                agent_name=agent_name,
+                payload=agent_result,
+            )
+
+            event_sequence += 1
+
+        await self._emit_event(
+            event_callback,
+            execution_id=execution.execution_id,
+            request_id=execution.request_id,
+            sequence=event_sequence,
+            event_type="execution_completed",
+            agent_name="synthesizer",
+            payload={
+                "route": execution.route,
+                "hop_count": execution.hop_count,
+                "final_response":
+                    execution.final_response,
+                "errors":
+                    list(execution.errors),
+                "sources":
+                    list(execution.sources),
+            },
+        )
 
         return execution
