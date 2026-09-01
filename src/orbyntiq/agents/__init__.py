@@ -5,6 +5,11 @@
     RoutingDecision,
 )
 from orbyntiq.agents.general import GeneralAgent
+from orbyntiq.agents.graph import (
+    GraphRoutingError,
+    build_multi_agent_graph,
+    select_route,
+)
 from orbyntiq.agents.mcp_agent import MCPAgent
 from orbyntiq.agents.research import ResearchAgent
 from orbyntiq.agents.state import (
@@ -23,11 +28,14 @@ __all__ = [
     "AgentState",
     "AgentStatus",
     "GeneralAgent",
+    "GraphRoutingError",
     "MCPAgent",
     "MCPToolDecision",
     "ResearchAgent",
     "RoutingDecision",
     "SupervisorAgent",
     "SynthesizerAgent",
+    "build_multi_agent_graph",
     "create_initial_state",
+    "select_route",
 ]
