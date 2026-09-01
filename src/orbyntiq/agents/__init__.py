@@ -4,6 +4,7 @@
     MCPToolDecision,
     RoutingDecision,
 )
+from orbyntiq.agents.general import GeneralAgent
 from orbyntiq.agents.mcp_agent import MCPAgent
 from orbyntiq.agents.research import ResearchAgent
 from orbyntiq.agents.state import (
@@ -20,6 +21,7 @@ __all__ = [
     "AgentRoute",
     "AgentState",
     "AgentStatus",
+    "GeneralAgent",
     "MCPAgent",
     "MCPToolDecision",
     "ResearchAgent",
