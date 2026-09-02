@@ -1,0 +1,63 @@
+<header class="topbar">
+  <div class="topbar-start">
+    <button
+      class="menu-button"
+      type="button"
+      aria-label="Open navigation"
+      (click)="menuRequested.emit()"
+    >
+      <svg viewBox="0 0 24 24">
+        <path d="M4 7h16M4 12h16M4 17h16" />
+      </svg>
+    </button>
+
+    <span class="workspace-name">
+      Local workspace
+    </span>
+  </div>
+
+  @if (platformState$ | async; as state) {
+    <div class="topbar-end">
+      <a
+        class="runtime-status"
+        routerLink="/operations"
+      >
+        <span
+          class="status-dot"
+          [class.status-dot--healthy]="
+            !state.error &&
+            state.data?.status === 'healthy'
+          "
+          [class.status-dot--degraded]="
+            !state.error &&
+            state.data?.status === 'degraded'
+          "
+          [class.status-dot--offline]="
+            state.error !== null
+          "
+        ></span>
+
+        <span>
+          @if (state.error) {
+            Offline
+          } @else if (state.loading) {
+            Starting…
+          } @else if (
+            state.data?.status === 'healthy'
+          ) {
+            Ready
+          } @else {
+            Attention
+          }
+        </span>
+      </a>
+
+      <span class="model-name">
+        {{
+          state.data?.components?.llm?.model
+            ?? 'Local AI'
+        }}
+      </span>
+    </div>
+  }
+</header>

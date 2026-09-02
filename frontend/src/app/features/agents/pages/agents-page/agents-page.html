@@ -1,0 +1,148 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <span class="eyebrow">
+        AI team
+      </span>
+
+      <h1>Meet your AI team</h1>
+
+      <p>
+        In Smart mode, Orbyntiq automatically chooses
+        specialized AI roles based on what your task needs.
+      </p>
+    </div>
+
+    <a
+      class="primary-action"
+      routerLink="/workspace"
+    >
+      Start a task
+    </a>
+  </header>
+
+  <section class="hero-card">
+    <div class="hero-symbol">
+      ◎
+    </div>
+
+    <div>
+      <span class="section-label">
+        Automatic orchestration
+      </span>
+
+      <h2>
+        You ask once. Orbyntiq coordinates the work.
+      </h2>
+
+      <p>
+        You do not need to choose an agent manually.
+        Smart mode routes your request, gathers the
+        required information, and prepares the answer.
+      </p>
+    </div>
+  </section>
+
+  <section class="team-section">
+    <div class="section-heading">
+      <span class="section-label">
+        Your specialists
+      </span>
+
+      <h2>How the team works</h2>
+    </div>
+
+    <div class="team-grid">
+      @for (
+        member of members;
+        track member.role
+      ) {
+        <article class="member-card">
+          <div class="member-top">
+            <span class="member-icon">
+              {{ member.symbol }}
+            </span>
+
+            <span class="ready-badge">
+              Built in
+            </span>
+          </div>
+
+          <div>
+            <h3>
+              {{ member.name }}
+            </h3>
+
+            <span class="technical-role">
+              {{ member.role }}
+            </span>
+          </div>
+
+          <p>
+            {{ member.description }}
+          </p>
+
+          <div class="member-usage">
+            <span>
+              When it helps
+            </span>
+
+            <strong>
+              {{ member.whenUsed }}
+            </strong>
+          </div>
+        </article>
+      }
+    </div>
+  </section>
+
+  <section class="flow-card">
+    <div class="section-heading">
+      <span class="section-label">
+        Smart mode
+      </span>
+
+      <h2>What happens after you press Send</h2>
+    </div>
+
+    <div class="flow">
+      <div>
+        <span>1</span>
+        <strong>Understand</strong>
+        <small>
+          Orbyntiq identifies what your request needs.
+        </small>
+      </div>
+
+      <b>→</b>
+
+      <div>
+        <span>2</span>
+        <strong>Route</strong>
+        <small>
+          The coordinator chooses the right specialist.
+        </small>
+      </div>
+
+      <b>→</b>
+
+      <div>
+        <span>3</span>
+        <strong>Work</strong>
+        <small>
+          Agents reason, research, or use tools.
+        </small>
+      </div>
+
+      <b>→</b>
+
+      <div>
+        <span>4</span>
+        <strong>Answer</strong>
+        <small>
+          The final result is returned to you.
+        </small>
+      </div>
+    </div>
+  </section>
+</section>

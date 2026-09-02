@@ -52,12 +52,31 @@ class Settings(BaseSettings):
         le=100,
     )
     llm_http_keepalive_expiry_seconds: float = Field(default=30.0, gt=0)
-    ollama_keep_alive: str = "10m"
+    ollama_keep_alive: str = "30m"
 
     embedding_provider: Literal["ollama"] = "ollama"
     embedding_model: str = "qwen3-embedding:0.6b"
     embedding_dimension: int = Field(default=1024, gt=0)
     embedding_timeout_seconds: float = Field(default=60.0, gt=0)
+
+    # RAG runtime performance defaults.
+    # These remain configurable so larger/deeper
+    # research modes can use higher budgets later.
+    rag_retrieval_limit: int = Field(
+        default=3,
+        ge=1,
+        le=50,
+    )
+    rag_chunk_character_limit: int = Field(
+        default=700,
+        ge=100,
+        le=20_000,
+    )
+    rag_max_output_tokens: int = Field(
+        default=160,
+        ge=32,
+        le=4_096,
+    )
 
     redis_url: str = "redis://localhost:6379/0"
     redis_connect_timeout_seconds: float = Field(default=2.0, gt=0)
@@ -79,6 +98,12 @@ class Settings(BaseSettings):
     qdrant_prefer_grpc: bool = False
     qdrant_timeout_seconds: float = Field(default=5.0, gt=0)
     qdrant_collection: str = "orbyntiq_documents"
+
+    knowledge_storage_dir: str = "data/knowledge"
+    knowledge_max_upload_bytes: int = Field(
+        default=10 * 1024 * 1024,
+        gt=0,
+    )
 
 
 @lru_cache

@@ -1,4 +1,4 @@
-﻿import asyncio
+import asyncio
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -67,14 +67,9 @@ class MultiAgentService:
         execution_repository: AgentExecutionRepository | None = None,
         workflow_repository: WorkflowHistoryRepository | None = None,
     ) -> None:
-        if (
-            execution_repository is None
-        ) != (
-            workflow_repository is None
-        ):
+        if (execution_repository is None) != (workflow_repository is None):
             raise ValueError(
-                "execution_repository and workflow_repository "
-                "must be configured together"
+                "execution_repository and workflow_repository must be configured together"
             )
 
         self._graph = graph
@@ -154,10 +149,7 @@ class MultiAgentService:
         sequence: int,
         error: str,
     ) -> None:
-        if (
-            self._execution_repository is None
-            or self._workflow_repository is None
-        ):
+        if self._execution_repository is None or self._workflow_repository is None:
             return
 
         await self._create_workflow_event(
@@ -178,9 +170,7 @@ class MultiAgentService:
             }
         )
 
-        await self._execution_repository.replace(
-            failed_execution
-        )
+        await self._execution_repository.replace(failed_execution)
 
     async def execute(
         self,
@@ -204,9 +194,7 @@ class MultiAgentService:
         persisted_execution: AgentExecution | None = None
         next_sequence = 0
 
-        if self._persistence_enabled(
-            conversation_id
-        ):
+        if self._persistence_enabled(conversation_id):
             assert conversation_id is not None
             assert self._execution_repository is not None
 
@@ -224,9 +212,7 @@ class MultiAgentService:
             )
 
             try:
-                await self._execution_repository.create(
-                    persisted_execution
-                )
+                await self._execution_repository.create(persisted_execution)
 
                 await self._create_workflow_event(
                     execution_id=execution_id,
@@ -235,10 +221,8 @@ class MultiAgentService:
                     event_type="execution_started",
                     agent_name="supervisor",
                     payload={
-                        "request_id":
-                            initial_state["request_id"],
-                        "user_query":
-                            initial_state["user_query"],
+                        "request_id": initial_state["request_id"],
+                        "user_query": initial_state["user_query"],
                     },
                 )
 
@@ -262,14 +246,122 @@ class MultiAgentService:
 
         next_sequence += 1
 
+        callback_sequence = 1
+        live_callback_stream = False
+
         try:
-            result = await self._graph.ainvoke(
-                initial_state
+            stream_method = getattr(
+                self._graph,
+                "astream",
+                None,
             )
+
+            if event_callback is not None and callable(stream_method):
+                live_callback_stream = True
+
+                result: dict[str, Any] | None = None
+                route_event_emitted = False
+                emitted_agent_results = 0
+
+                async for streamed_state in stream_method(
+                    initial_state,
+                    stream_mode="values",
+                ):
+                    if not isinstance(
+                        streamed_state,
+                        dict,
+                    ):
+                        continue
+
+                    result = dict(streamed_state)
+
+                    streamed_route = result.get("route")
+
+                    if not route_event_emitted and streamed_route in {
+                        "research",
+                        "mcp",
+                        "general",
+                    }:
+                        route_reason_value = result.get("route_reason")
+
+                        route_reason = (
+                            None if route_reason_value is None else str(route_reason_value)
+                        )
+
+                        await self._emit_event(
+                            event_callback,
+                            execution_id=execution_id,
+                            request_id=(initial_state["request_id"]),
+                            sequence=(callback_sequence),
+                            event_type=("routing_completed"),
+                            agent_name="supervisor",
+                            payload={
+                                "route": streamed_route,
+                                "route_reason": route_reason,
+                            },
+                        )
+
+                        callback_sequence += 1
+                        route_event_emitted = True
+
+                        await self._emit_event(
+                            event_callback,
+                            execution_id=execution_id,
+                            request_id=(initial_state["request_id"]),
+                            sequence=(callback_sequence),
+                            event_type=("agent_started"),
+                            agent_name=str(streamed_route),
+                            payload={
+                                "route": streamed_route,
+                            },
+                        )
+
+                        callback_sequence += 1
+
+                    raw_agent_results = result.get(
+                        "agent_results",
+                        [],
+                    )
+
+                    if isinstance(
+                        raw_agent_results,
+                        list,
+                    ):
+                        current_results = [
+                            dict(item)
+                            for item in raw_agent_results
+                            if isinstance(
+                                item,
+                                dict,
+                            )
+                        ]
+
+                        for agent_result in current_results[emitted_agent_results:]:
+                            agent_name_value = agent_result.get("agent")
+
+                            agent_name = None if agent_name_value is None else str(agent_name_value)
+
+                            await self._emit_event(
+                                event_callback,
+                                execution_id=(execution_id),
+                                request_id=(initial_state["request_id"]),
+                                sequence=(callback_sequence),
+                                event_type=("agent_result"),
+                                agent_name=(agent_name),
+                                payload=(agent_result),
+                            )
+
+                            callback_sequence += 1
+
+                        emitted_agent_results = len(current_results)
+
+                if result is None:
+                    raise RuntimeError("Multi-agent graph stream returned no state.")
+
+            else:
+                result = await self._graph.ainvoke(initial_state)
         except asyncio.CancelledError:
-            error = (
-                "Multi-agent execution cancelled."
-            )
+            error = "Multi-agent execution cancelled."
 
             if persisted_execution is not None:
                 try:
@@ -285,7 +377,7 @@ class MultiAgentService:
                 event_callback,
                 execution_id=execution_id,
                 request_id=initial_state["request_id"],
-                sequence=next_sequence,
+                sequence=callback_sequence,
                 event_type="execution_failed",
                 payload={
                     "error": error,
@@ -295,9 +387,7 @@ class MultiAgentService:
             raise
 
         except Exception as exc:
-            error = (
-                "Multi-agent graph execution failed."
-            )
+            error = "Multi-agent graph execution failed."
 
             if persisted_execution is not None:
                 try:
@@ -313,16 +403,14 @@ class MultiAgentService:
                 event_callback,
                 execution_id=execution_id,
                 request_id=initial_state["request_id"],
-                sequence=next_sequence,
+                sequence=callback_sequence,
                 event_type="execution_failed",
                 payload={
                     "error": error,
                 },
             )
 
-            raise MultiAgentExecutionError(
-                error
-            ) from exc
+            raise MultiAgentExecutionError(error) from exc
 
         route = result.get("route")
 
@@ -331,9 +419,7 @@ class MultiAgentService:
             "mcp",
             "general",
         }:
-            error = (
-                "Multi-agent execution returned an invalid route."
-            )
+            error = "Multi-agent execution returned an invalid route."
 
             if persisted_execution is not None:
                 try:
@@ -356,9 +442,7 @@ class MultiAgentService:
                 },
             )
 
-            raise MultiAgentExecutionError(
-                error
-            )
+            raise MultiAgentExecutionError(error)
 
         final_response = str(
             result.get(
@@ -368,9 +452,7 @@ class MultiAgentService:
         ).strip()
 
         if not final_response:
-            error = (
-                "Multi-agent execution returned no final response."
-            )
+            error = "Multi-agent execution returned no final response."
 
             if persisted_execution is not None:
                 try:
@@ -393,9 +475,7 @@ class MultiAgentService:
                 },
             )
 
-            raise MultiAgentExecutionError(
-                error
-            )
+            raise MultiAgentExecutionError(error)
 
         resolved_request_id = str(
             result.get(
@@ -404,15 +484,9 @@ class MultiAgentService:
             )
         )
 
-        route_reason_value = result.get(
-            "route_reason"
-        )
+        route_reason_value = result.get("route_reason")
 
-        route_reason = (
-            None
-            if route_reason_value is None
-            else str(route_reason_value)
-        )
+        route_reason = None if route_reason_value is None else str(route_reason_value)
 
         sources = tuple(
             dict(source)
@@ -466,37 +540,26 @@ class MultiAgentService:
             try:
                 await self._create_workflow_event(
                     execution_id=execution_id,
-                    conversation_id=(
-                        persisted_execution.conversation_id
-                    ),
+                    conversation_id=(persisted_execution.conversation_id),
                     sequence=next_sequence,
                     event_type="routing_completed",
                     agent_name="supervisor",
                     payload={
                         "route": execution.route,
-                        "route_reason":
-                            execution.route_reason,
+                        "route_reason": execution.route_reason,
                     },
                 )
 
                 next_sequence += 1
 
                 for agent_result in agent_results:
-                    agent_name_value = agent_result.get(
-                        "agent"
-                    )
+                    agent_name_value = agent_result.get("agent")
 
-                    agent_name = (
-                        None
-                        if agent_name_value is None
-                        else str(agent_name_value)
-                    )
+                    agent_name = None if agent_name_value is None else str(agent_name_value)
 
                     await self._create_workflow_event(
                         execution_id=execution_id,
-                        conversation_id=(
-                            persisted_execution.conversation_id
-                        ),
+                        conversation_id=(persisted_execution.conversation_id),
                         sequence=next_sequence,
                         event_type="agent_result",
                         agent_name=agent_name,
@@ -507,103 +570,79 @@ class MultiAgentService:
 
                 await self._create_workflow_event(
                     execution_id=execution_id,
-                    conversation_id=(
-                        persisted_execution.conversation_id
-                    ),
+                    conversation_id=(persisted_execution.conversation_id),
                     sequence=next_sequence,
                     event_type="execution_completed",
                     agent_name="synthesizer",
                     payload={
                         "route": execution.route,
-                        "hop_count":
-                            execution.hop_count,
-                        "final_response":
-                            execution.final_response,
-                        "errors":
-                            list(execution.errors),
-                        "sources":
-                            list(execution.sources),
+                        "hop_count": execution.hop_count,
+                        "final_response": execution.final_response,
+                        "errors": list(execution.errors),
+                        "sources": list(execution.sources),
                     },
                 )
 
-                completed_execution = (
-                    persisted_execution.model_copy(
-                        update={
-                            "status": "completed",
-                            "output": {
-                                "request_id":
-                                    execution.request_id,
-                                "route":
-                                    execution.route,
-                                "route_reason":
-                                    execution.route_reason,
-                                "final_response":
-                                    execution.final_response,
-                                "sources":
-                                    list(execution.sources),
-                                "errors":
-                                    list(execution.errors),
-                                "agent_results":
-                                    list(
-                                        execution.agent_results
-                                    ),
-                                "hop_count":
-                                    execution.hop_count,
-                            },
-                            "completed_at":
-                                datetime.now(UTC),
-                        }
-                    )
+                completed_execution = persisted_execution.model_copy(
+                    update={
+                        "status": "completed",
+                        "output": {
+                            "request_id": execution.request_id,
+                            "route": execution.route,
+                            "route_reason": execution.route_reason,
+                            "final_response": execution.final_response,
+                            "sources": list(execution.sources),
+                            "errors": list(execution.errors),
+                            "agent_results": list(execution.agent_results),
+                            "hop_count": execution.hop_count,
+                        },
+                        "completed_at": datetime.now(UTC),
+                    }
                 )
 
-                await self._execution_repository.replace(
-                    completed_execution
-                )
+                await self._execution_repository.replace(completed_execution)
 
             except RepositoryError as exc:
                 raise MultiAgentExecutionError(
                     "Failed to persist multi-agent execution result."
                 ) from exc
 
-        event_sequence = 1
+        event_sequence = callback_sequence
 
-        await self._emit_event(
-            event_callback,
-            execution_id=execution.execution_id,
-            request_id=execution.request_id,
-            sequence=event_sequence,
-            event_type="routing_completed",
-            agent_name="supervisor",
-            payload={
-                "route": execution.route,
-                "route_reason": execution.route_reason,
-            },
-        )
-
-        event_sequence += 1
-
-        for agent_result in execution.agent_results:
-            agent_name_value = agent_result.get(
-                "agent"
-            )
-
-            agent_name = (
-                None
-                if agent_name_value is None
-                else str(agent_name_value)
-            )
+        if not live_callback_stream:
+            event_sequence = 1
 
             await self._emit_event(
                 event_callback,
-                execution_id=execution.execution_id,
-                request_id=execution.request_id,
+                execution_id=(execution.execution_id),
+                request_id=(execution.request_id),
                 sequence=event_sequence,
-                event_type="agent_result",
-                agent_name=agent_name,
-                payload=agent_result,
+                event_type=("routing_completed"),
+                agent_name="supervisor",
+                payload={
+                    "route": execution.route,
+                    "route_reason": execution.route_reason,
+                },
             )
 
             event_sequence += 1
+
+            for agent_result in execution.agent_results:
+                agent_name_value = agent_result.get("agent")
+
+                agent_name = None if agent_name_value is None else str(agent_name_value)
+
+                await self._emit_event(
+                    event_callback,
+                    execution_id=(execution.execution_id),
+                    request_id=(execution.request_id),
+                    sequence=(event_sequence),
+                    event_type=("agent_result"),
+                    agent_name=(agent_name),
+                    payload=(agent_result),
+                )
+
+                event_sequence += 1
 
         await self._emit_event(
             event_callback,
@@ -615,12 +654,9 @@ class MultiAgentService:
             payload={
                 "route": execution.route,
                 "hop_count": execution.hop_count,
-                "final_response":
-                    execution.final_response,
-                "errors":
-                    list(execution.errors),
-                "sources":
-                    list(execution.sources),
+                "final_response": execution.final_response,
+                "errors": list(execution.errors),
+                "sources": list(execution.sources),
             },
         )
 

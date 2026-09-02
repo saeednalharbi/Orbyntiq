@@ -85,6 +85,8 @@ class LLMService:
     async def generate(
         self,
         messages: Sequence[LLMMessage],
+        *,
+        max_tokens: int | None = None,
     ) -> LLMResponse:
         provider, model = get_llm_metric_labels(self.provider)
 
@@ -109,7 +111,13 @@ class LLMService:
                 ).inc()
 
             try:
-                response = await self.provider.generate(messages)
+                if max_tokens is None:
+                    response = await self.provider.generate(messages)
+                else:
+                    response = await self.provider.generate_with_options(
+                        messages,
+                        max_tokens=max_tokens,
+                    )
 
             except asyncio.CancelledError:
                 status = "cancelled"
@@ -268,6 +276,7 @@ class LLMService:
         *,
         system_prompt: str = BASE_SYSTEM_PROMPT,
         history: Sequence[LLMMessage] = (),
+        max_tokens: int | None = None,
     ) -> LLMResponse:
         messages = build_messages(
             prompt,
@@ -275,7 +284,10 @@ class LLMService:
             history=history,
         )
 
-        return await self.generate(messages)
+        return await self.generate(
+            messages,
+            max_tokens=max_tokens,
+        )
 
     async def chat_stream(
         self,

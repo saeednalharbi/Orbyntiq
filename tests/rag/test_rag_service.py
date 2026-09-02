@@ -18,6 +18,7 @@ class FakeRetriever:
     ) -> None:
         self.chunks = chunks
         self.last_query: str | None = None
+        self.last_limit: int | None = None
 
     async def retrieve(
         self,
@@ -26,8 +27,20 @@ class FakeRetriever:
         limit: int = 5,
         score_threshold: float | None = None,
         filters=None,
+        timings_ms: dict[str, float] | None = None,
     ) -> list[RetrievedChunk]:
         self.last_query = query
+        self.last_limit = limit
+
+        if timings_ms is not None:
+            timings_ms.update(
+                {
+                    "embedding_ms": 1.0,
+                    "qdrant_ms": 2.0,
+                    "retrieval_ms": 3.0,
+                }
+            )
+
         return self.chunks
 
 
@@ -40,6 +53,7 @@ class FakeLLMService:
         self.called = False
         self.last_prompt: str | None = None
         self.last_system_prompt: str | None = None
+        self.last_max_tokens: int | None = None
 
     async def chat(
         self,
@@ -47,10 +61,12 @@ class FakeLLMService:
         *,
         system_prompt: str,
         history=(),
+        max_tokens: int | None = None,
     ) -> LLMResponse:
         self.called = True
         self.last_prompt = prompt
         self.last_system_prompt = system_prompt
+        self.last_max_tokens = max_tokens
 
         return LLMResponse(
             content=self.response,
@@ -82,13 +98,9 @@ def test_rag_answer_uses_retrieved_context() -> None:
             llm_service=llm,  # type: ignore[arg-type]
         )
 
-        result = await service.answer(
-            "What stores document embeddings?"
-        )
+        result = await service.answer("What stores document embeddings?")
 
-        assert result.answer == (
-            "Qdrant stores the embeddings [S1]."
-        )
+        assert result.answer == ("Qdrant stores the embeddings [S1].")
         assert result.model == "fake-model"
         assert len(result.sources) == 1
         assert result.sources[0].citation == "S1"
@@ -96,10 +108,7 @@ def test_rag_answer_uses_retrieved_context() -> None:
 
         assert llm.called is True
         assert "[S1] platform.txt" in llm.last_prompt
-        assert (
-            "Qdrant stores document embeddings."
-            in llm.last_prompt
-        )
+        assert "Qdrant stores document embeddings." in llm.last_prompt
 
     asyncio.run(scenario())
 
@@ -114,9 +123,7 @@ def test_rag_returns_safe_answer_without_context() -> None:
             llm_service=llm,  # type: ignore[arg-type]
         )
 
-        result = await service.answer(
-            "Unknown knowledge question"
-        )
+        result = await service.answer("Unknown knowledge question")
 
         assert result.answer == NO_CONTEXT_ANSWER
         assert result.sources == ()
@@ -140,14 +147,10 @@ def test_rag_preserves_page_source() -> None:
             page_number=7,
         )
 
-        llm = FakeLLMService(
-            "The detail is shown on page 7 [S1]."
-        )
+        llm = FakeLLMService("The detail is shown on page 7 [S1].")
 
         service = RAGService(
-            retriever=FakeRetriever(
-                [chunk]
-            ),  # type: ignore[arg-type]
+            retriever=FakeRetriever([chunk]),  # type: ignore[arg-type]
             llm_service=llm,  # type: ignore[arg-type]
         )
 
@@ -161,9 +164,7 @@ def test_rag_preserves_page_source() -> None:
 
 def test_rag_rejects_empty_question() -> None:
     service = RAGService(
-        retriever=FakeRetriever(
-            []
-        ),  # type: ignore[arg-type]
+        retriever=FakeRetriever([]),  # type: ignore[arg-type]
         llm_service=FakeLLMService(),  # type: ignore[arg-type]
     )
 
@@ -177,20 +178,60 @@ def test_rag_rejects_empty_question() -> None:
 def test_rag_rejects_empty_llm_answer() -> None:
     async def scenario() -> None:
         service = RAGService(
-            retriever=FakeRetriever(
-                [make_chunk()]
-            ),  # type: ignore[arg-type]
-            llm_service=FakeLLMService(
-                "   "
-            ),  # type: ignore[arg-type]
+            retriever=FakeRetriever([make_chunk()]),  # type: ignore[arg-type]
+            llm_service=FakeLLMService("   "),  # type: ignore[arg-type]
         )
 
         with pytest.raises(
             RAGGenerationError,
             match="empty RAG answer",
         ):
-            await service.answer(
-                "What stores embeddings?"
-            )
+            await service.answer("What stores embeddings?")
+
+    asyncio.run(scenario())
+
+
+def test_rag_runtime_budgets_are_configurable() -> None:
+    async def scenario() -> None:
+        chunk = RetrievedChunk(
+            id="budget-chunk",
+            score=0.95,
+            document_id="budget-document",
+            chunk_index=0,
+            text=("ABCDEFGHIJKLSHOULD_NOT_APPEAR"),
+            source_path="/docs/budget.txt",
+            file_name="budget.txt",
+            checksum="budget",
+            page_number=None,
+        )
+
+        retriever = FakeRetriever([chunk])
+
+        llm = FakeLLMService()
+
+        service = RAGService(
+            retriever=retriever,  # type: ignore[arg-type]
+            llm_service=llm,  # type: ignore[arg-type]
+            retrieval_limit=2,
+            chunk_character_limit=12,
+            max_output_tokens=48,
+        )
+
+        result = await service.answer("Explain the budget.")
+
+        assert retriever.last_limit == 2
+        assert llm.last_max_tokens == 48
+
+        assert "ABCDEFGHIJKL" in llm.last_prompt
+
+        assert "SHOULD_NOT_APPEAR" not in llm.last_prompt
+
+        assert result.timings_ms["embedding_ms"] == 1.0
+
+        assert result.timings_ms["qdrant_ms"] == 2.0
+
+        assert "generation_ms" in result.timings_ms
+
+        assert "total_ms" in result.timings_ms
 
     asyncio.run(scenario())

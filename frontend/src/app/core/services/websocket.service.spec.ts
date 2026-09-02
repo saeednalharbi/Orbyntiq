@@ -184,6 +184,75 @@ describe('WebSocketService', () => {
     });
   });
 
+  it('should send multi-agent execution requests', () => {
+    service.connect();
+
+    const socket = FakeWebSocket.instances[0];
+
+    socket.open();
+
+    service.sendAgentExecution(
+      'req-agent-123',
+      'Research the indexed architecture.',
+      'conversation-456',
+      8,
+    );
+
+    expect(
+      JSON.parse(socket.sentMessages[0]),
+    ).toEqual({
+      type: 'agent_execute',
+      request_id: 'req-agent-123',
+      query: 'Research the indexed architecture.',
+      conversation_id: 'conversation-456',
+      max_hops: 8,
+    });
+  });
+
+  it('should expose typed multi-agent workflow events', () => {
+    const events: ServerWebSocketEvent[] = [];
+
+    service.events$.subscribe((event) => {
+      events.push(event);
+    });
+
+    service.connect();
+
+    const socket = FakeWebSocket.instances[0];
+
+    socket.open();
+
+    socket.receive({
+      type: 'agent_event',
+      request_id: 'req-agent-123',
+      execution_id: 'execution-456',
+      sequence: 1,
+      event_type: 'routing_completed',
+      agent_name: 'supervisor',
+      payload: {
+        route: 'research',
+        route_reason:
+          'Grounded research is required.',
+      },
+    });
+
+    expect(events).toEqual([
+      {
+        type: 'agent_event',
+        request_id: 'req-agent-123',
+        execution_id: 'execution-456',
+        sequence: 1,
+        event_type: 'routing_completed',
+        agent_name: 'supervisor',
+        payload: {
+          route: 'research',
+          route_reason:
+            'Grounded research is required.',
+        },
+      },
+    ]);
+  });
+
   it('should send cancellation requests', () => {
     service.connect();
 

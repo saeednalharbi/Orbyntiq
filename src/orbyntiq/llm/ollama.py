@@ -71,6 +71,19 @@ class OllamaProvider(LLMProvider):
     ) -> LLMResponse:
         return await self._generate(messages=messages)
 
+    async def generate_with_options(
+        self,
+        messages: Sequence[LLMMessage],
+        *,
+        max_tokens: int | None = None,
+    ) -> LLMResponse:
+        """Generate while applying per-request runtime limits."""
+
+        return await self._generate(
+            messages=messages,
+            max_tokens=max_tokens,
+        )
+
     async def generate_structured(
         self,
         messages: Sequence[LLMMessage],
@@ -192,11 +205,13 @@ class OllamaProvider(LLMProvider):
         *,
         messages: Sequence[LLMMessage],
         response_format: dict[str, Any] | None = None,
+        max_tokens: int | None = None,
     ) -> LLMResponse:
         async with self._semaphore:
             return await self._generate_request(
                 messages=messages,
                 response_format=response_format,
+                max_tokens=max_tokens,
             )
 
     async def _generate_request(
@@ -204,6 +219,7 @@ class OllamaProvider(LLMProvider):
         *,
         messages: Sequence[LLMMessage],
         response_format: dict[str, Any] | None = None,
+        max_tokens: int | None = None,
     ) -> LLMResponse:
         payload: dict[str, Any] = {
             "model": self.model,
@@ -220,6 +236,12 @@ class OllamaProvider(LLMProvider):
 
         if response_format is not None:
             payload["format"] = response_format
+
+        if max_tokens is not None:
+            payload["options"] = {
+                "num_predict": max_tokens,
+                "num_ctx": 1024,
+            }
 
         for attempt in range(self.max_retries + 1):
             try:

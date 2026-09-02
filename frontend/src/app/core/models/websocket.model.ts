@@ -9,6 +9,14 @@ export interface ChatStreamRequest {
   message: string;
 }
 
+export interface AgentExecuteWebSocketRequest {
+  type: 'agent_execute';
+  request_id: string;
+  query: string;
+  conversation_id: string | null;
+  max_hops: number;
+}
+
 export interface CancelStreamRequest {
   type: 'cancel';
   request_id: string;
@@ -20,6 +28,7 @@ export interface PingRequest {
 
 export type ClientWebSocketMessage =
   | ChatStreamRequest
+  | AgentExecuteWebSocketRequest
   | CancelStreamRequest
   | PingRequest;
 
@@ -46,6 +55,16 @@ export interface StreamCancelledEvent {
   request_id: string;
 }
 
+export interface AgentWorkflowEvent {
+  type: 'agent_event';
+  request_id: string;
+  execution_id: string;
+  sequence: number;
+  event_type: string;
+  agent_name: string | null;
+  payload: Record<string, unknown>;
+}
+
 export interface PongEvent {
   type: 'pong';
 }
@@ -62,5 +81,6 @@ export type ServerWebSocketEvent =
   | StreamChunkEvent
   | StreamCompletedEvent
   | StreamCancelledEvent
+  | AgentWorkflowEvent
   | PongEvent
   | StreamErrorEvent;

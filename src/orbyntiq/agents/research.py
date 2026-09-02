@@ -1,4 +1,4 @@
-﻿from dataclasses import asdict
+from dataclasses import asdict
 from typing import Any
 
 from orbyntiq.agents.contracts import AgentResult, AgentStatus
@@ -44,10 +44,7 @@ class ResearchAgent:
                 "hop_count": state["hop_count"] + 1,
             }
 
-        sources = [
-            asdict(source)
-            for source in answer.sources
-        ]
+        sources = [asdict(source) for source in answer.sources]
 
         result = AgentResult(
             agent="research",
@@ -56,6 +53,7 @@ class ResearchAgent:
             metadata={
                 "model": answer.model,
                 "source_count": len(sources),
+                "timings_ms": answer.timings_ms,
             },
             sources=sources,
         )

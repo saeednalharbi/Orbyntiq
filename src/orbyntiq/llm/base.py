@@ -15,13 +15,28 @@ class LLMProvider(ABC):
     ) -> LLMResponse:
         """Generate a normal text response."""
 
-    @abstractmethod
+    async def generate_with_options(
+        self,
+        messages: Sequence[LLMMessage],
+        *,
+        max_tokens: int | None = None,
+    ) -> LLMResponse:
+        """Generate with optional runtime constraints."""
+
+        del max_tokens
+
+        return await self.generate(messages)
+
     async def generate_structured(
         self,
         messages: Sequence[LLMMessage],
         schema: dict[str, Any],
     ) -> LLMResponse:
         """Generate a response constrained to a JSON schema."""
+
+        del messages, schema
+
+        raise NotImplementedError("Structured generation is not supported by this LLM provider.")
 
     def stream(
         self,

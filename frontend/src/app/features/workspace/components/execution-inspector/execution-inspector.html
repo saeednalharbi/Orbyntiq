@@ -1,0 +1,251 @@
+﻿<section class="inspector">
+  <header class="inspector-header">
+    <div>
+      <span class="eyebrow">
+        Task details
+      </span>
+
+      <h2>
+        How Orbyntiq handled this
+      </h2>
+    </div>
+
+    <span
+      class="connection"
+      [attr.data-state]="connectionState"
+    >
+      <span></span>
+
+      {{
+        connectionState === 'connected'
+          ? 'Ready'
+          : connectionState === 'connecting'
+            ? 'Connecting'
+            : 'Offline'
+      }}
+    </span>
+  </header>
+
+  @if (mode === 'direct') {
+    <div class="friendly-summary">
+      <span class="summary-icon">↗</span>
+
+      <div>
+        <strong>
+          Direct AI response
+        </strong>
+
+        <p>
+          This request was sent directly to
+          your local AI model without using
+          the AI team.
+        </p>
+      </div>
+    </div>
+
+    <details class="technical-details">
+      <summary>
+        Technical details
+      </summary>
+
+      <div class="detail-section">
+        <div class="detail-row">
+          <span>Connection</span>
+          <strong>WebSocket</strong>
+        </div>
+
+        <div class="detail-row">
+          <span>Model</span>
+          <strong>
+            {{ model ?? 'Not used yet' }}
+          </strong>
+        </div>
+
+        <div class="detail-row">
+          <span>Streaming protocol</span>
+          <strong>
+            started / chunk / completed
+          </strong>
+        </div>
+      </div>
+    </details>
+  } @else if (execution; as run) {
+    <section class="summary-grid">
+      <div>
+        <span>Status</span>
+
+        <strong
+          [attr.data-execution-state]="
+            run.status
+          "
+        >
+          {{
+            run.status === 'completed'
+              ? 'Completed'
+              : run.status === 'running'
+                ? 'Working'
+                : (run.status | titlecase)
+          }}
+        </strong>
+      </div>
+
+      <div>
+        <span>Handled by</span>
+
+        <strong>
+          {{
+            run.route
+              ? (run.route | titlecase)
+              : 'Choosing...'
+          }}
+        </strong>
+      </div>
+
+      <div>
+        <span>Steps</span>
+
+        <strong>
+          {{
+            run.hopCount ??
+            run.events.length
+          }}
+        </strong>
+      </div>
+    </section>
+
+    @if (run.routeReason) {
+      <section class="reason-section">
+        <span class="section-label">
+          Why this approach?
+        </span>
+
+        <p>{{ run.routeReason }}</p>
+      </section>
+    }
+
+    <section class="timeline-section">
+      <div class="timeline-header">
+        <span class="section-label">
+          Progress
+        </span>
+
+        <span>
+          {{ run.events.length }}
+          steps
+        </span>
+      </div>
+
+      @if (run.events.length === 0) {
+        <div class="timeline-empty">
+          Waiting for the task to start...
+        </div>
+      }
+
+      <div class="timeline">
+        @for (
+          event of run.events;
+          track event.sequence
+        ) {
+          <div class="timeline-event">
+            <div class="timeline-marker">
+              <span></span>
+            </div>
+
+            <div class="timeline-copy">
+              <div>
+                <strong>
+                  {{ eventTitle(event) }}
+                </strong>
+              </div>
+
+              @if (event.agentName) {
+                <small>
+                  {{ event.agentName }}
+                </small>
+              }
+
+              @if (eventDetail(event)) {
+                <p>
+                  {{ eventDetail(event) }}
+                </p>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+
+    @if (run.errors.length > 0) {
+      <section class="errors-section">
+        <span class="section-label">
+          Problems
+        </span>
+
+        @for (
+          error of run.errors;
+          track $index
+        ) {
+          <p>{{ error }}</p>
+        }
+      </section>
+    }
+
+    <details class="technical-details">
+      <summary>
+        Technical details
+      </summary>
+
+      <div class="identifier-section">
+        <div class="identifier">
+          <span>Request ID</span>
+          <code>{{ run.requestId }}</code>
+        </div>
+
+        <div class="identifier">
+          <span>Execution ID</span>
+
+          <code>
+            {{
+              run.executionId ??
+              'Pending'
+            }}
+          </code>
+        </div>
+
+        <div class="identifier">
+          <span>Route</span>
+
+          <code>
+            {{
+              run.route ??
+              'Pending'
+            }}
+          </code>
+        </div>
+
+        <div class="identifier">
+          <span>Hop count</span>
+
+          <code>
+            {{
+              run.hopCount ??
+              'Pending'
+            }}
+          </code>
+        </div>
+      </div>
+    </details>
+  } @else {
+    <div class="inspector-empty">
+      <span class="empty-node"></span>
+
+      <strong>No active execution</strong>
+
+      <p>
+        Send a message in Smart mode and
+        Orbyntiq will show you how it handled
+        the task here.
+      </p>
+    </div>
+  }
+</section>

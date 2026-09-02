@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from time import perf_counter
 
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.http.exceptions import (
@@ -47,25 +48,19 @@ class RetrievalFilter:
             normalized = value.strip()
 
             if not normalized:
-                raise ValueError(
-                    f"{key} filter cannot be empty"
-                )
+                raise ValueError(f"{key} filter cannot be empty")
 
             conditions.append(
                 FieldCondition(
                     key=key,
-                    match=MatchValue(
-                        value=normalized
-                    ),
+                    match=MatchValue(value=normalized),
                 )
             )
 
         if not conditions:
             return None
 
-        return Filter(
-            must=conditions
-        )
+        return Filter(must=conditions)
 
 
 @dataclass(frozen=True, slots=True)
@@ -100,74 +95,60 @@ class SemanticRetriever:
         limit: int = 5,
         score_threshold: float | None = None,
         filters: RetrievalFilter | None = None,
+        timings_ms: dict[str, float] | None = None,
     ) -> list[RetrievedChunk]:
+        retrieval_started = perf_counter()
+
         normalized_query = query.strip()
 
         if not normalized_query:
-            raise ValueError(
-                "query cannot be empty"
-            )
+            raise ValueError("query cannot be empty")
 
         if limit < 1 or limit > 50:
-            raise ValueError(
-                "limit must be between 1 and 50"
-            )
+            raise ValueError("limit must be between 1 and 50")
 
-        if (
-            score_threshold is not None
-            and not -1.0 <= score_threshold <= 1.0
-        ):
-            raise ValueError(
-                "score_threshold must be between -1 and 1"
-            )
+        if score_threshold is not None and not -1.0 <= score_threshold <= 1.0:
+            raise ValueError("score_threshold must be between -1 and 1")
 
         attributes: dict[str, object] = {
             "gen_ai.operation.name": "retrieval",
             "orbyntiq.rag.limit": limit,
-            "orbyntiq.rag.filters_present": (
-                filters is not None
-            ),
+            "orbyntiq.rag.filters_present": (filters is not None),
         }
 
         if score_threshold is not None:
-            attributes[
-                "orbyntiq.rag.score_threshold"
-            ] = score_threshold
+            attributes["orbyntiq.rag.score_threshold"] = score_threshold
 
         with traced_span(
             "rag.retrieve",
             tracer_name="orbyntiq.rag",
             attributes=attributes,
         ) as span:
+            embedding_started = perf_counter()
+
             with traced_span(
                 "embedding.query",
                 tracer_name="orbyntiq.rag",
                 attributes={
                     "gen_ai.operation.name": "embeddings",
                     "orbyntiq.embedding.provider": bounded_name(
-                        type(
-                            self._embeddings
-                        ).__name__,
+                        type(self._embeddings).__name__,
                         default="unknown",
                     ),
                 },
             ):
-                query_vector = (
-                    await self._embeddings.embed_query(
-                        normalized_query
-                    )
-                )
+                query_vector = await self._embeddings.embed_query(normalized_query)
 
-            query_filter = (
-                filters.to_qdrant_filter()
-                if filters is not None
-                else None
-            )
+            embedding_ms = (perf_counter() - embedding_started) * 1000
+
+            query_filter = filters.to_qdrant_filter() if filters is not None else None
 
             collection = bounded_name(
                 self._settings.qdrant_collection,
                 default="unknown",
             )
+
+            qdrant_started = perf_counter()
 
             with traced_span(
                 "qdrant.search",
@@ -179,18 +160,14 @@ class SemanticRetriever:
                 },
             ) as qdrant_span:
                 try:
-                    response = (
-                        await self._qdrant.query_points(
-                            collection_name=(
-                                self._settings.qdrant_collection
-                            ),
-                            query=query_vector,
-                            query_filter=query_filter,
-                            with_payload=True,
-                            with_vectors=False,
-                            limit=limit,
-                            score_threshold=score_threshold,
-                        )
+                    response = await self._qdrant.query_points(
+                        collection_name=(self._settings.qdrant_collection),
+                        query=query_vector,
+                        query_filter=query_filter,
+                        with_payload=True,
+                        with_vectors=False,
+                        limit=limit,
+                        score_threshold=score_threshold,
                     )
 
                 except (
@@ -198,14 +175,14 @@ class SemanticRetriever:
                     UnexpectedResponse,
                     OSError,
                 ) as exc:
-                    raise RetrievalError(
-                        "Semantic retrieval failed"
-                    ) from exc
+                    raise RetrievalError("Semantic retrieval failed") from exc
 
                 qdrant_span.set_attribute(
                     "orbyntiq.qdrant.result_count",
                     len(response.points),
                 )
+
+            qdrant_ms = (perf_counter() - qdrant_started) * 1000
 
             results: list[RetrievedChunk] = []
 
@@ -213,50 +190,26 @@ class SemanticRetriever:
                 payload = point.payload or {}
 
                 try:
-                    document_id = str(
-                        payload["document_id"]
-                    )
-                    chunk_index = int(
-                        payload["chunk_index"]
-                    )
-                    text = str(
-                        payload["text"]
-                    )
-                    source_path = str(
-                        payload["source_path"]
-                    )
-                    file_name = str(
-                        payload["file_name"]
-                    )
-                    checksum = str(
-                        payload["checksum"]
-                    )
+                    document_id = str(payload["document_id"])
+                    chunk_index = int(payload["chunk_index"])
+                    text = str(payload["text"])
+                    source_path = str(payload["source_path"])
+                    file_name = str(payload["file_name"])
+                    checksum = str(payload["checksum"])
 
-                    raw_page_number = payload.get(
-                        "page_number"
-                    )
+                    raw_page_number = payload.get("page_number")
 
-                    page_number = (
-                        None
-                        if raw_page_number is None
-                        else int(
-                            raw_page_number
-                        )
-                    )
+                    page_number = None if raw_page_number is None else int(raw_page_number)
 
                 except (
                     KeyError,
                     TypeError,
                     ValueError,
                 ) as exc:
-                    raise RetrievalError(
-                        "Retrieved point contains invalid payload"
-                    ) from exc
+                    raise RetrievalError("Retrieved point contains invalid payload") from exc
 
                 if not text.strip():
-                    raise RetrievalError(
-                        "Retrieved point contains empty text"
-                    )
+                    raise RetrievalError("Retrieved point contains empty text")
 
                 results.append(
                     RetrievedChunk(
@@ -276,5 +229,14 @@ class SemanticRetriever:
                 "orbyntiq.rag.result_count",
                 len(results),
             )
+
+            if timings_ms is not None:
+                timings_ms.update(
+                    {
+                        "embedding_ms": embedding_ms,
+                        "qdrant_ms": qdrant_ms,
+                        "retrieval_ms": (perf_counter() - retrieval_started) * 1000,
+                    }
+                )
 
             return results

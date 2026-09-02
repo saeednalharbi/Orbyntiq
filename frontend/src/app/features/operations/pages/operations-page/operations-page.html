@@ -1,0 +1,121 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <span class="eyebrow">
+        System
+      </span>
+
+      <h1>Orbyntiq system</h1>
+
+      <p>
+        A simple view of the services that power your
+        private AI workspace.
+      </p>
+    </div>
+
+    <span class="local-badge">
+      Local-first
+    </span>
+  </header>
+
+  <section class="privacy-card">
+    <span class="privacy-icon">
+      ◉
+    </span>
+
+    <div>
+      <strong>
+        Built around local infrastructure
+      </strong>
+
+      <p>
+        AI inference, retrieval, state, and persistence
+        can run on your own machine rather than depending
+        on a hosted AI platform.
+      </p>
+    </div>
+  </section>
+
+  <section class="system-section">
+    <span class="section-label">
+      Platform services
+    </span>
+
+    <h2>
+      What powers Orbyntiq
+    </h2>
+
+    <div class="system-list">
+      @for (
+        capability of capabilities;
+        track capability.name
+      ) {
+        <article>
+          <div class="service-copy">
+            <strong>
+              {{ capability.name }}
+            </strong>
+
+            <p>
+              {{ capability.purpose }}
+            </p>
+          </div>
+
+          <div class="service-technology">
+            <span>
+              {{ capability.status }}
+            </span>
+
+            <strong>
+              {{ capability.technology }}
+            </strong>
+          </div>
+        </article>
+      }
+    </div>
+  </section>
+
+  <section class="observability-card">
+    <div>
+      <span class="section-label">
+        Advanced
+      </span>
+
+      <h2>
+        Monitoring and diagnostics
+      </h2>
+
+      <p>
+        Orbyntiq includes metrics, tracing, dashboards,
+        request IDs, and AI execution instrumentation for
+        deeper operational inspection.
+      </p>
+    </div>
+
+    <div class="observability-links">
+      <a
+        href="http://localhost:3000"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        Open Grafana
+      </a>
+
+      <a
+        href="http://localhost:9090"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        Open Prometheus
+      </a>
+
+      <a
+        href="http://127.0.0.1:8000/docs"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        API documentation
+      </a>
+    </div>
+  </section>
+</section>

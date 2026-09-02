@@ -1,0 +1,76 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <span class="eyebrow">
+        History
+      </span>
+
+      <h1>Your activity</h1>
+
+      <p>
+        Review the AI tasks and conversations you run
+        through Orbyntiq.
+      </p>
+    </div>
+
+    <a
+      routerLink="/workspace"
+      class="primary-action"
+    >
+      New task
+    </a>
+  </header>
+
+  <section class="summary-grid">
+    <article>
+      <span class="summary-icon">
+        ◷
+      </span>
+
+      <div>
+        <strong>Task history</strong>
+        <p>
+          Orbyntiq records execution data in its
+          persistence layer for traceability.
+        </p>
+      </div>
+    </article>
+
+    <article>
+      <span class="summary-icon">
+        ⎇
+      </span>
+
+      <div>
+        <strong>Workflow traceability</strong>
+        <p>
+          Smart mode execution IDs and workflow events
+          can be inspected during a task.
+        </p>
+      </div>
+    </article>
+  </section>
+
+  <section class="history-panel">
+    <div class="empty-state">
+      <span class="empty-icon">
+        ◷
+      </span>
+
+      <h2>
+        Saved task history is coming to this view
+      </h2>
+
+      <p>
+        Orbyntiq already persists execution and workflow
+        data. The current frontend does not yet expose a
+        history API, so this page intentionally does not
+        display invented activity.
+      </p>
+
+      <a routerLink="/workspace">
+        Go to Workspace
+      </a>
+    </div>
+  </section>
+</section>

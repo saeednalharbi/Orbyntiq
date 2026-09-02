@@ -1,0 +1,136 @@
+@if (state$ | async; as state) {
+  <section class="ask-page">
+    <div
+      class="workspace-ambient"
+      aria-hidden="true"
+    ></div>
+
+    <header class="ask-header">
+      <div>
+        <span class="eyebrow">
+          Orbyntiq
+        </span>
+
+        <h1>
+          Ask anything.
+        </h1>
+
+        <p>
+          Orbyntiq can answer directly, search your
+          knowledge, or coordinate specialized agents.
+        </p>
+      </div>
+
+      <div class="ask-controls">
+        <div
+          class="mode-switcher"
+          role="group"
+          aria-label="AI mode"
+        >
+          <button
+            type="button"
+            [class.mode-button--active]="
+              state.mode === 'agent'
+            "
+            [disabled]="state.isRunning"
+            (click)="setMode('agent')"
+          >
+            <span class="mode-dot"></span>
+            Smart
+          </button>
+
+          <button
+            type="button"
+            [class.mode-button--active]="
+              state.mode === 'direct'
+            "
+            [disabled]="state.isRunning"
+            (click)="setMode('direct')"
+          >
+            Direct
+          </button>
+        </div>
+
+        <div
+          class="connection-state"
+          [attr.data-state]="
+            state.connectionState
+          "
+        >
+          <span></span>
+
+          {{
+            state.connectionState === 'connected'
+              ? 'Ready'
+              : state.connectionState === 'connecting'
+                ? 'Connecting'
+                : 'Starting'
+          }}
+        </div>
+      </div>
+    </header>
+
+    <div class="workspace-content">
+      <app-workspace-conversation
+        [messages]="state.messages"
+        [mode]="state.mode"
+        [isRunning]="state.isRunning"
+        [error]="state.error"
+        [execution]="state.execution"
+        (querySubmitted)="submit($event)"
+        (cancelRequested)="cancel()"
+        (resetRequested)="reset()"
+        (errorDismissed)="clearError()"
+      />
+
+      @if (
+        state.mode === 'agent' &&
+        (
+          state.execution !== null ||
+          state.isRunning
+        )
+      ) {
+        <details class="run-details">
+          <summary>
+            <div class="run-summary-copy">
+              <span class="run-icon">
+                @if (state.isRunning) {
+                  <i class="run-spinner"></i>
+                } @else {
+                  ✓
+                }
+              </span>
+
+              <div>
+                <strong>
+                  @if (state.isRunning) {
+                    Orbyntiq is working
+                  } @else {
+                    Task completed
+                  }
+                </strong>
+
+                <span>
+                  View agent activity and technical details
+                </span>
+              </div>
+            </div>
+
+            <span class="details-chevron">
+              ›
+            </span>
+          </summary>
+
+          <app-execution-inspector
+            [mode]="state.mode"
+            [connectionState]="
+              state.connectionState
+            "
+            [execution]="state.execution"
+            [model]="state.lastModel"
+          />
+        </details>
+      }
+    </div>
+  </section>
+}

@@ -9,6 +9,12 @@ export const API_CONFIG = {
   llm: {
     chat: `${environment.apiBaseUrl}/llm/chat`,
   },
+  knowledge: {
+    status: `${environment.apiBaseUrl}/knowledge/status`,
+    documents: `${environment.apiBaseUrl}/knowledge/documents`,
+    search: `${environment.apiBaseUrl}/knowledge/search`,
+    ingest: `${environment.apiBaseUrl}/knowledge/ingest`,
+  },
   websocket: {
     chat: `${websocketBaseUrl}/ws/chat`,
   },

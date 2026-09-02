@@ -22,7 +22,9 @@ from orbyntiq.api.middleware import (
     RequestLoggingMiddleware,
 )
 from orbyntiq.api.routes.agents import router as agents_router
+from orbyntiq.api.routes.knowledge import router as knowledge_router
 from orbyntiq.api.routes.llm import router as llm_router
+from orbyntiq.api.routes.platform import router as platform_router
 from orbyntiq.api.routes.websocket import router as websocket_router
 from orbyntiq.core.config import get_settings
 from orbyntiq.core.logging import configure_logging, get_logger
@@ -189,6 +191,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             rag_service = RAGService(
                 retriever=retriever,
                 llm_service=get_llm_service(),
+                retrieval_limit=(settings.rag_retrieval_limit),
+                chunk_character_limit=(settings.rag_chunk_character_limit),
+                max_output_tokens=(settings.rag_max_output_tokens),
             )
 
             configure_mcp_services(
@@ -303,6 +308,8 @@ register_error_handlers(app)
 
 app.include_router(agents_router)
 app.include_router(llm_router)
+app.include_router(platform_router)
+app.include_router(knowledge_router)
 app.include_router(websocket_router)
 
 

@@ -1,72 +1,37 @@
-<div class="app-shell">
-  <aside class="sidebar">
-    <a
-      class="brand"
-      routerLink="/"
-      aria-label="Orbyntiq home"
+﻿<div class="control-plane">
+  <div
+    class="sidebar-container"
+    [class.sidebar-container--open]="
+      mobileNavigationOpen()
+    "
+  >
+    <app-sidebar
+      (navigationRequested)="
+        closeMobileNavigation()
+      "
+    />
+  </div>
+
+  @if (mobileNavigationOpen()) {
+    <button
+      class="navigation-backdrop"
+      type="button"
+      aria-label="Close navigation"
+      (click)="closeMobileNavigation()"
+    ></button>
+  }
+
+  <div class="application">
+    <app-topbar
+      (menuRequested)="openMobileNavigation()"
+    />
+
+    <main
+      id="main-content"
+      class="content"
+      tabindex="-1"
     >
-      <span class="brand-mark">O</span>
-
-      <span class="brand-copy">
-        <strong>Orbyntiq</strong>
-        <small>Enterprise AI Platform</small>
-      </span>
-    </a>
-
-    <nav
-      class="navigation"
-      aria-label="Primary navigation"
-    >
-      <span class="navigation-label">Workspace</span>
-
-      <a
-        class="navigation-item navigation-item--active"
-        routerLink="/"
-      >
-        <span class="navigation-icon">&#9672;</span>
-        <span>AI Workspace</span>
-      </a>
-
-      <div class="navigation-item navigation-item--disabled">
-        <span class="navigation-icon">&#9671;</span>
-        <span>Agents</span>
-        <span class="coming-soon">Soon</span>
-      </div>
-
-      <div class="navigation-item navigation-item--disabled">
-        <span class="navigation-icon">&#9633;</span>
-        <span>Knowledge</span>
-        <span class="coming-soon">Soon</span>
-      </div>
-    </nav>
-
-    <div class="sidebar-footer">
-      <div class="runtime-status">
-        <span class="status-dot"></span>
-
-        <div>
-          <strong>Local Runtime</strong>
-          <small>Ollama powered</small>
-        </div>
-      </div>
-    </div>
-  </aside>
-
-  <main class="main">
-    <header class="topbar">
-      <div>
-        <p class="eyebrow">ORBYNTIQ CONSOLE</p>
-        <h1>AI Workspace</h1>
-      </div>
-
-      <div class="environment">
-        <span class="environment-dot"></span>
-        Local
-      </div>
-    </header>
-
-    <section class="workspace">
       <router-outlet />
-    </section>
-  </main>
+    </main>
+  </div>
 </div>

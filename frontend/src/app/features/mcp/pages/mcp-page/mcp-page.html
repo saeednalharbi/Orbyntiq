@@ -1,0 +1,120 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <span class="eyebrow">
+        Connected tools
+      </span>
+
+      <h1>Tools Orbyntiq can use</h1>
+
+      <p>
+        Smart mode can use built-in retrieval and MCP
+        capabilities when your request needs more than
+        a direct AI response.
+      </p>
+    </div>
+
+    <a
+      routerLink="/workspace"
+      class="primary-action"
+    >
+      Try Smart mode
+    </a>
+  </header>
+
+  <section class="intro-card">
+    <span class="intro-icon">
+      ⌘
+    </span>
+
+    <div>
+      <strong>
+        Tools are selected automatically
+      </strong>
+
+      <p>
+        You do not need to choose one before asking a
+        question. Orbyntiq's coordinator decides when
+        retrieval or another capability is useful.
+      </p>
+    </div>
+  </section>
+
+  <div class="tool-grid">
+    @for (
+      tool of tools;
+      track tool.name
+    ) {
+      <article class="tool-card">
+        <div class="tool-top">
+          <span class="tool-icon">
+            {{ tool.icon }}
+          </span>
+
+          <span class="built-in">
+            Built in
+          </span>
+        </div>
+
+        <h2>
+          {{ tool.name }}
+        </h2>
+
+        <p>
+          {{ tool.description }}
+        </p>
+
+        <span class="technical-detail">
+          {{ tool.detail }}
+        </span>
+      </article>
+    }
+  </div>
+
+  <details class="advanced-card">
+    <summary>
+      <div>
+        <strong>
+          Advanced information
+        </strong>
+
+        <span>
+          How tool connectivity works
+        </span>
+      </div>
+
+      <b>›</b>
+    </summary>
+
+    <div class="advanced-content">
+      <p>
+        Orbyntiq exposes MCP through its FastAPI
+        application and uses an MCP agent inside the
+        multi-agent graph. Retrieval and RAG services
+        are configured during application startup.
+      </p>
+
+      <div class="detail-grid">
+        <div>
+          <span>Protocol</span>
+          <strong>Model Context Protocol</strong>
+        </div>
+
+        <div>
+          <span>Transport</span>
+          <strong>Streamable HTTP</strong>
+        </div>
+
+        <div>
+          <span>Knowledge layer</span>
+          <strong>RAG + Qdrant</strong>
+        </div>
+
+        <div>
+          <span>Agent integration</span>
+          <strong>MCP agent</strong>
+        </div>
+      </div>
+    </div>
+  </details>
+</section>

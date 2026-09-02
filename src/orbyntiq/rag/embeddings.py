@@ -57,6 +57,7 @@ class OllamaEmbeddingProvider:
                 json={
                     "model": self.model,
                     "input": normalized,
+                    "keep_alive": "0",
                 },
             )
             response.raise_for_status()
@@ -68,37 +69,25 @@ class OllamaEmbeddingProvider:
             TypeError,
             ValueError,
         ) as exc:
-            raise EmbeddingError(
-                "Failed to generate embeddings"
-            ) from exc
+            raise EmbeddingError("Failed to generate embeddings") from exc
 
-        if (
-            not isinstance(embeddings, list)
-            or len(embeddings) != len(normalized)
-        ):
-            raise EmbeddingError(
-                "Embedding response has an invalid shape"
-            )
+        if not isinstance(embeddings, list) or len(embeddings) != len(normalized):
+            raise EmbeddingError("Embedding response has an invalid shape")
 
         vectors: list[list[float]] = []
 
         for embedding in embeddings:
             if not isinstance(embedding, list):
-                raise EmbeddingError(
-                    "Embedding response contains an invalid vector"
-                )
+                raise EmbeddingError("Embedding response contains an invalid vector")
 
             try:
                 vector = [float(value) for value in embedding]
             except (TypeError, ValueError) as exc:
-                raise EmbeddingError(
-                    "Embedding vector contains invalid values"
-                ) from exc
+                raise EmbeddingError("Embedding vector contains invalid values") from exc
 
             if len(vector) != self.dimension:
                 raise EmbeddingError(
-                    "Embedding dimension mismatch: "
-                    f"expected {self.dimension}, got {len(vector)}"
+                    f"Embedding dimension mismatch: expected {self.dimension}, got {len(vector)}"
                 )
 
             vectors.append(vector)
@@ -126,7 +115,4 @@ def create_embedding_provider(
     if settings.embedding_provider == "ollama":
         return OllamaEmbeddingProvider(settings)
 
-    raise ValueError(
-        f"Unsupported embedding provider: "
-        f"{settings.embedding_provider}"
-    )
+    raise ValueError(f"Unsupported embedding provider: {settings.embedding_provider}")

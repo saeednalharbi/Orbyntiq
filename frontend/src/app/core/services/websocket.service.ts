@@ -8,6 +8,7 @@ import {
 
 import { API_CONFIG } from '../config/api.config';
 import {
+  AgentExecuteWebSocketRequest,
   CancelStreamRequest,
   ChatStreamRequest,
   ClientWebSocketMessage,
@@ -26,6 +27,7 @@ const SERVER_EVENT_TYPES = new Set([
   'chunk',
   'completed',
   'cancelled',
+  'agent_event',
   'pong',
   'error',
 ]);
@@ -106,6 +108,23 @@ export class WebSocketService implements OnDestroy {
       type: 'chat',
       request_id: requestId,
       message,
+    };
+
+    this.send(request);
+  }
+
+  sendAgentExecution(
+    requestId: string,
+    query: string,
+    conversationId: string | null = null,
+    maxHops = 8,
+  ): void {
+    const request: AgentExecuteWebSocketRequest = {
+      type: 'agent_execute',
+      request_id: requestId,
+      query,
+      conversation_id: conversationId,
+      max_hops: maxHops,
     };
 
     this.send(request);

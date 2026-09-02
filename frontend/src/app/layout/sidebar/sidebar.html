@@ -1,0 +1,162 @@
+<aside class="sidebar">
+  <div class="brand">
+    <a
+      class="brand-link"
+      routerLink="/"
+      aria-label="Orbyntiq home"
+      (click)="onNavigate()"
+    >
+      <span
+        class="brand-mark"
+        aria-hidden="true"
+      >
+        <span></span>
+      </span>
+
+      <span class="brand-name">
+        Orbyntiq
+      </span>
+    </a>
+  </div>
+
+  <nav
+    class="navigation"
+    aria-label="Main navigation"
+  >
+    <div class="nav-group">
+      @for (
+        item of primaryNavigation;
+        track item.route
+      ) {
+        <a
+          class="nav-item"
+          [routerLink]="item.route"
+          routerLinkActive="nav-item--active"
+          (click)="onNavigate()"
+        >
+          <span
+            class="nav-icon"
+            aria-hidden="true"
+          >
+            @switch (item.icon) {
+              @case ('workspace') {
+                <svg viewBox="0 0 24 24">
+                  <path d="M4 12h16" />
+                  <path d="M12 4v16" />
+                  <path d="M5 5l14 14" />
+                </svg>
+              }
+
+              @case ('knowledge') {
+                <svg viewBox="0 0 24 24">
+                  <path d="M6 4h11a2 2 0 0 1 2 2v14H8a3 3 0 0 1-3-3V5a1 1 0 0 1 1-1z" />
+                  <path d="M8 4v16" />
+                </svg>
+              }
+
+              @case ('agents') {
+                <svg viewBox="0 0 24 24">
+                  <circle cx="12" cy="6" r="2.5" />
+                  <circle cx="6" cy="17" r="2.5" />
+                  <circle cx="18" cy="17" r="2.5" />
+                  <path d="M12 8.5v3M12 11.5l-6 3M12 11.5l6 3" />
+                </svg>
+              }
+
+              @case ('executions') {
+                <svg viewBox="0 0 24 24">
+                  <path d="M5 5h14v14H5z" />
+                  <path d="M8 9h8M8 12h8M8 15h5" />
+                </svg>
+              }
+            }
+          </span>
+
+          <span>{{ item.label }}</span>
+        </a>
+      }
+    </div>
+
+    <div class="navigation-separator"></div>
+
+    <div class="nav-group">
+      @for (
+        item of secondaryNavigation;
+        track item.route
+      ) {
+        <a
+          class="nav-item"
+          [routerLink]="item.route"
+          routerLinkActive="nav-item--active"
+          (click)="onNavigate()"
+        >
+          <span
+            class="nav-icon"
+            aria-hidden="true"
+          >
+            @switch (item.icon) {
+              @case ('mcp') {
+                <svg viewBox="0 0 24 24">
+                  <path d="M8 8h8v8H8z" />
+                  <path d="M12 3v5M12 16v5M3 12h5M16 12h5" />
+                </svg>
+              }
+
+              @case ('operations') {
+                <svg viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="3" />
+                  <path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.5-2.4 1a7 7 0 0 0-1.7-1L14.5 3h-5l-.4 3a7 7 0 0 0-1.7 1L5 6 3 9.5 5.1 11a7 7 0 0 0 0 2L3 14.5 5 18l2.4-1a7 7 0 0 0 1.7 1l.4 3h5l.4-3a7 7 0 0 0 1.7-1l2.4 1 2-3.5-2.1-1.5a7 7 0 0 0 .1-1z" />
+                </svg>
+              }
+            }
+          </span>
+
+          <span>{{ item.label }}</span>
+        </a>
+      }
+    </div>
+  </nav>
+
+  @if (platformState$ | async; as state) {
+    <div class="sidebar-footer">
+      <a
+        class="workspace-status"
+        routerLink="/operations"
+        (click)="onNavigate()"
+      >
+        <span
+          class="status-dot"
+          [class.status-dot--healthy]="
+            !state.error &&
+            state.data?.status === 'healthy'
+          "
+          [class.status-dot--degraded]="
+            !state.error &&
+            state.data?.status === 'degraded'
+          "
+          [class.status-dot--offline]="
+            state.error !== null
+          "
+        ></span>
+
+        <span>
+          @if (state.error) {
+            Local workspace unavailable
+          } @else if (state.loading) {
+            Starting workspace…
+          } @else if (
+            state.data?.status === 'healthy'
+          ) {
+            Local workspace
+          } @else {
+            Workspace needs attention
+          }
+        </span>
+      </a>
+
+      <span class="version">
+        v0.1.0
+      </span>
+    </div>
+  }
+</aside>

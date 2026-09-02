@@ -1,4 +1,4 @@
-﻿from typing import Any
+from typing import Any
 
 from orbyntiq.agents.contracts import RoutingDecision
 from orbyntiq.agents.state import AgentState
@@ -34,14 +34,76 @@ Rules:
 """.strip()
 
 
+_RESEARCH_ROUTE_PHRASES = (
+    "my knowledge",
+    "knowledge base",
+    "indexed knowledge",
+    "search my knowledge",
+    "search the knowledge",
+    "using my knowledge",
+    "from my knowledge",
+    "uploaded document",
+    "uploaded documents",
+    "uploaded file",
+    "uploaded files",
+    "my document",
+    "my documents",
+    "my file",
+    "my files",
+    "from the documents",
+    "in the documents",
+)
+
+_MCP_ROUTE_PHRASES = (
+    "connected tool",
+    "connected tools",
+    "mcp tool",
+    "mcp tools",
+    "use the tool",
+    "use a tool",
+    "run the tool",
+    "execute the tool",
+)
+
+
+def _fast_routing_decision(
+    query: str,
+) -> RoutingDecision | None:
+    """Route explicit specialist intents without an LLM call."""
+
+    normalized = " ".join(query.casefold().split())
+
+    if any(phrase in normalized for phrase in _RESEARCH_ROUTE_PHRASES):
+        return RoutingDecision(
+            route="research",
+            reason=("The request explicitly targets the user's indexed knowledge."),
+        )
+
+    if any(phrase in normalized for phrase in _MCP_ROUTE_PHRASES):
+        return RoutingDecision(
+            route="mcp",
+            reason=("The request explicitly requires a connected tool."),
+        )
+
+    return None
+
+
 class SupervisorAgent:
     """Route Orbyntiq requests to the appropriate specialized agent."""
 
     def __init__(self, llm_service: LLMService) -> None:
         self._llm_service = llm_service
 
-    async def decide(self, state: AgentState) -> RoutingDecision:
+    async def decide(
+        self,
+        state: AgentState,
+    ) -> RoutingDecision:
         """Produce a validated routing decision for the current request."""
+
+        fast_decision = _fast_routing_decision(state["user_query"])
+
+        if fast_decision is not None:
+            return fast_decision
 
         return await self._llm_service.chat_structured(
             state["user_query"],

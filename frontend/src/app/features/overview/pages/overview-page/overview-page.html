@@ -1,0 +1,311 @@
+<main
+  class="landing"
+  [class.landing--leaving]="leaving()"
+>
+  <div
+    class="ambient ambient--one"
+    aria-hidden="true"
+  ></div>
+
+  <div
+    class="ambient ambient--two"
+    aria-hidden="true"
+  ></div>
+
+  <div
+    class="pointer-light"
+    aria-hidden="true"
+  ></div>
+
+  <div
+    class="grid-background"
+    aria-hidden="true"
+  ></div>
+
+  <div
+    class="noise"
+    aria-hidden="true"
+  ></div>
+
+  <div
+    class="particles"
+    aria-hidden="true"
+  >
+    <span class="particle particle--1"></span>
+    <span class="particle particle--2"></span>
+    <span class="particle particle--3"></span>
+    <span class="particle particle--4"></span>
+    <span class="particle particle--5"></span>
+    <span class="particle particle--6"></span>
+    <span class="particle particle--7"></span>
+    <span class="particle particle--8"></span>
+  </div>
+
+  <header class="landing-nav">
+    <a
+      class="landing-brand"
+      href="/"
+      aria-label="Orbyntiq"
+    >
+      <span class="mini-mark">
+        <span></span>
+      </span>
+
+      <strong>
+        Orbyntiq
+      </strong>
+    </a>
+
+    <div class="landing-nav-end">
+      <span class="local-status">
+        <span></span>
+        Local-first AI
+      </span>
+
+      <button
+        type="button"
+        class="nav-enter"
+        (click)="enterWorkspace()"
+      >
+        Open workspace
+      </button>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="hero-visual">
+      <div
+        class="orbit-system"
+        aria-hidden="true"
+      >
+        <span class="outer-glow"></span>
+
+        <span class="orbit orbit--one">
+          <i></i>
+        </span>
+
+        <span class="orbit orbit--two">
+          <i></i>
+        </span>
+
+        <span class="orbit orbit--three">
+          <i></i>
+        </span>
+
+        <div class="core">
+          <div class="core-inner">
+            <span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-copy">
+      <span class="hero-eyebrow">
+        Private multi-agent intelligence
+      </span>
+
+      <h1>
+        Intelligence that
+        <span>works with you.</span>
+      </h1>
+
+      <p>
+        Ask questions, research your knowledge,
+        orchestrate specialized AI agents, and keep
+        everything running on infrastructure you control.
+      </p>
+
+      <div class="hero-actions">
+        <button
+          type="button"
+          class="primary-cta"
+          (click)="enterWorkspace()"
+        >
+          <span>
+            Start with Orbyntiq
+          </span>
+
+          <b aria-hidden="true">
+            →
+          </b>
+        </button>
+
+        <span class="hero-note">
+          No cloud AI required
+        </span>
+      </div>
+    </div>
+
+    <div class="capabilities">
+      <div>
+        <strong>Private</strong>
+        <span>
+          Local AI runtime
+        </span>
+      </div>
+
+      <div>
+        <strong>Grounded</strong>
+        <span>
+          Your knowledge
+        </span>
+      </div>
+
+      <div>
+        <strong>Agentic</strong>
+        <span>
+          Specialized AI team
+        </span>
+      </div>
+
+      <div>
+        <strong>Observable</strong>
+        <span>
+          Trace every run
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <section class="product-preview">
+    <div class="preview-copy">
+      <span class="section-eyebrow">
+        One request. Coordinated intelligence.
+      </span>
+
+      <h2>
+        Orbyntiq decides how the work gets done.
+      </h2>
+
+      <p>
+        Smart mode routes tasks through the right
+        combination of reasoning, retrieval,
+        tools, and specialized agents.
+      </p>
+    </div>
+
+    <div class="workflow-demo">
+      <div class="demo-request">
+        <span class="demo-user">
+          You
+        </span>
+
+        <p>
+          Research my knowledge base and explain
+          the platform architecture.
+        </p>
+      </div>
+
+      <div class="workflow-line">
+        <span></span>
+      </div>
+
+      <div class="workflow-steps">
+        <article
+          class="
+            workflow-step
+            workflow-step--one
+          "
+        >
+          <div class="step-status">
+            <span></span>
+          </div>
+
+          <div>
+            <strong>
+              Understand
+            </strong>
+
+            <small>
+              Supervisor
+            </small>
+          </div>
+
+          <b>
+            Routed
+          </b>
+        </article>
+
+        <article
+          class="
+            workflow-step
+            workflow-step--two
+          "
+        >
+          <div class="step-status">
+            <span></span>
+          </div>
+
+          <div>
+            <strong>
+              Research
+            </strong>
+
+            <small>
+              Knowledge + Research agent
+            </small>
+          </div>
+
+          <b>
+            4 sources
+          </b>
+        </article>
+
+        <article
+          class="
+            workflow-step
+            workflow-step--three
+          "
+        >
+          <div class="step-status">
+            <span></span>
+          </div>
+
+          <div>
+            <strong>
+              Compose
+            </strong>
+
+            <small>
+              Synthesizer
+            </small>
+          </div>
+
+          <b>
+            Answer ready
+          </b>
+        </article>
+      </div>
+
+      <div class="demo-response">
+        <div class="response-brand">
+          <span class="response-logo">
+            <span></span>
+          </span>
+
+          <strong>
+            Orbyntiq
+          </strong>
+        </div>
+
+        <p>
+          Your platform combines local inference,
+          semantic retrieval, persistent state and
+          coordinated AI agents
+          <span class="stream-cursor"></span>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="landing-footer">
+    <span>
+      Orbyntiq
+    </span>
+
+    <span>
+      Local intelligence · Private by design
+    </span>
+  </footer>
+</main>
