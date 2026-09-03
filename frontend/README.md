@@ -1,59 +1,166 @@
-# Frontend
+# Orbyntiq Frontend
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.1.6.
+The Orbyntiq frontend is the Angular 22 product interface for the local-first multi-agent AI platform.
 
-## Development server
+It turns the backend AI infrastructure into an inspectable workspace for direct conversations, Smart-mode agent orchestration, private knowledge retrieval, persisted execution history, MCP capabilities, and local runtime health.
 
-To start a local development server, run:
+## Product Surfaces
 
-```bash
-ng serve
+| Surface | Purpose |
+| --- | --- |
+| **Ask** | Direct AI conversations and Smart-mode multi-agent execution |
+| **Knowledge** | Private document ingestion, semantic search, and indexed-document inspection |
+| **Agents** | Visualize the supervisor, specialist routes, and synthesizer workflow |
+| **Runs** | Inspect persisted executions, routing decisions, events, sources, and status |
+| **Integrations** | Inspect built-in MCP transport, tools, resources, prompts, and agent integration |
+| **Settings** | Inspect local models, RAG configuration, infrastructure, and runtime health |
+
+## Interaction Modes
+
+### Smart Mode
+
+Smart mode sends the request through Orbyntiq's LangGraph workflow:
+
+```text
+Request
+  |
+  v
+Supervisor
+  |
+  +-- Research
+  +-- General
+  `-- MCP
+  |
+  v
+Synthesizer
+  |
+  v
+Final response
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+The interface displays live workflow events while the request is executing, including routing and specialist progress.
 
-## Code scaffolding
+### Direct Mode
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+Direct mode bypasses multi-agent routing and sends the request to the normal LLM chat path.
 
-```bash
-ng generate component component-name
+## Backend Interfaces
+
+The frontend consumes the Orbyntiq FastAPI backend over HTTP and WebSocket.
+
+| Interface | Endpoint |
+| --- | --- |
+| Health | `GET /health` |
+| Direct LLM chat | `POST /api/v1/llm/chat` |
+| Agent execution | `POST /api/v1/agents/execute` |
+| Live chat/workflow stream | `WS /api/v1/ws/chat` |
+| Metrics | `GET /metrics` |
+| MCP transport | `/mcp` |
+
+The validated local backend runs on:
+
+```text
+http://127.0.0.1:8000
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+## Local Development
 
-```bash
-ng generate --help
+### Prerequisites
+
+Before starting the frontend, the Orbyntiq backend should be running.
+
+From the repository root:
+
+```powershell
+docker compose up --build -d
+docker compose ps
 ```
 
-## Building
+Ollama must also be available locally with the models configured by Orbyntiq.
 
-To build the project run:
+Verify the API:
 
-```bash
-ng build
+```powershell
+Invoke-RestMethod http://127.0.0.1:8000/health
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+Expected status:
 
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
+```text
+healthy
 ```
 
-## Running end-to-end tests
+### Install Frontend Dependencies
 
-For end-to-end (e2e) testing, run:
+For a clean reproducible install:
 
-```bash
-ng e2e
+```powershell
+cd frontend
+npm ci
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+### Start the Development Server
 
-## Additional Resources
+```powershell
+npm start
+```
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+Open:
+
+```text
+http://localhost:4200
+```
+
+Angular automatically reloads the application while frontend source files are changed.
+
+## Build
+
+Create a production frontend build with:
+
+```powershell
+npm run build
+```
+
+Build output is written to the Angular `dist/` directory.
+
+## Tests
+
+Run the frontend unit tests with:
+
+```powershell
+npm test -- --watch=false
+```
+
+The frontend uses Vitest through the Angular test runner.
+
+## Main Technology
+
+- Angular 22
+- TypeScript
+- RxJS
+- Angular Router
+- Angular Forms
+- Vitest
+- SCSS
+- HTTP + WebSocket integration with FastAPI
+
+## Runtime Experience
+
+The UI is designed around the same core principles as the backend:
+
+- **Private** - the workspace is built around local inference.
+- **Grounded** - private knowledge is searchable through the RAG pipeline.
+- **Agentic** - Smart mode exposes the coordinated multi-agent workflow.
+- **Observable** - runs, routing decisions, workflow events, sources, and infrastructure state are inspectable.
+
+## Related Documentation
+
+For the full system architecture and backend infrastructure, see:
+
+- [`../README.md`](../README.md)
+- [`../docs/architecture.md`](../docs/architecture.md)
+- [`../docs/load-testing/phase-11-results.md`](../docs/load-testing/phase-11-results.md)
+
+## Portfolio Note
+
+This frontend is part of the complete Orbyntiq v0.1.0 AI engineering project. It is not a standalone Angular demo; it is the product surface for the FastAPI, LangGraph, RAG, MCP, persistence, observability, and local-model runtime implemented in the repository.
