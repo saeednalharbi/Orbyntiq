@@ -1,4 +1,4 @@
-﻿from typing import Literal
+from typing import Literal
 
 from pydantic import BaseModel
 
@@ -47,8 +47,28 @@ class PlatformComponents(BaseModel):
     observability: ObservabilityComponentStatus
 
 
+class PlatformRuntimeConfig(BaseModel):
+    embedding_provider: str
+    embedding_model: str
+    embedding_dimension: int
+
+    qdrant_collection: str
+
+    rag_retrieval_limit: int
+    rag_chunk_character_limit: int
+    rag_max_output_tokens: int
+
+    llm_max_concurrency: int
+    ollama_keep_alive: str
+
+    metrics_path: str
+    otel_service_name: str
+    otel_exporter_enabled: bool
+
+
 class PlatformStatusResponse(BaseModel):
     status: PlatformState
     service: str
     environment: str
     components: PlatformComponents
+    runtime: PlatformRuntimeConfig

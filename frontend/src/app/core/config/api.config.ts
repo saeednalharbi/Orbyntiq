@@ -1,4 +1,4 @@
-﻿import { environment } from '../../../environments/environment';
+import { environment } from '../../../environments/environment';
 
 const websocketBaseUrl = environment.apiBaseUrl
   .replace(/^https:\/\//, 'wss://')
@@ -14,6 +14,15 @@ export const API_CONFIG = {
     documents: `${environment.apiBaseUrl}/knowledge/documents`,
     search: `${environment.apiBaseUrl}/knowledge/search`,
     ingest: `${environment.apiBaseUrl}/knowledge/ingest`,
+  },
+  executions: {
+    list: `${environment.apiBaseUrl}/executions`,
+    detail: (
+      executionId: string,
+    ) =>
+      `${environment.apiBaseUrl}/executions/${encodeURIComponent(
+        executionId,
+      )}`,
   },
   websocket: {
     chat: `${websocketBaseUrl}/ws/chat`,

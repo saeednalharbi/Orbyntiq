@@ -1070,3 +1070,221 @@
     display: none;
   }
 }
+
+
+/* ===== ORBYNTIQ V4.4 LANDING ENTRANCE ===== */
+
+.landing-nav {
+  animation:
+    v44-nav-enter
+    600ms
+    cubic-bezier(
+      0.22,
+      1,
+      0.36,
+      1
+    )
+    both;
+}
+
+.hero-visual {
+  opacity: 0;
+
+  animation:
+    v44-orbit-enter
+    800ms 110ms
+    cubic-bezier(
+      0.22,
+      1,
+      0.36,
+      1
+    )
+    forwards;
+}
+
+.hero-copy {
+  opacity: 0;
+
+  animation:
+    v44-copy-enter
+    800ms 220ms
+    cubic-bezier(
+      0.22,
+      1,
+      0.36,
+      1
+    )
+    forwards;
+}
+
+.capabilities {
+  opacity: 0;
+
+  animation:
+    v44-capabilities-enter
+    650ms 410ms
+    cubic-bezier(
+      0.22,
+      1,
+      0.36,
+      1
+    )
+    forwards;
+}
+
+.primary-cta {
+  position: relative;
+  overflow: hidden;
+}
+
+.primary-cta::before {
+  position: absolute;
+
+  width: 70px;
+  height: 160%;
+
+  top: -30%;
+  left: -100px;
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.65),
+      transparent
+    );
+
+  opacity: 0.23;
+
+  transform:
+    skewX(-18deg);
+
+  transition:
+    left 500ms ease;
+
+  content: "";
+}
+
+.primary-cta:hover::before {
+  left: calc(100% + 40px);
+}
+
+.landing--leaving
+.hero-copy {
+  transform:
+    translateY(-8px);
+
+  opacity: 0;
+
+  transition:
+    opacity 220ms ease,
+    transform 300ms ease;
+}
+
+.landing--leaving
+.hero-visual {
+  transform:
+    scale(1.08);
+
+  opacity: 0.3;
+
+  transition:
+    opacity 260ms ease,
+    transform 320ms ease;
+}
+
+.landing--leaving
+.capabilities {
+  opacity: 0;
+
+  transform:
+    translateY(8px);
+
+  transition:
+    opacity 180ms ease,
+    transform 260ms ease;
+}
+
+@keyframes v44-nav-enter {
+  from {
+    opacity: 0;
+
+    transform:
+      translateY(-6px);
+  }
+
+  to {
+    opacity: 1;
+
+    transform:
+      translateY(0);
+  }
+}
+
+@keyframes v44-orbit-enter {
+  from {
+    opacity: 0;
+
+    transform:
+      scale(0.72)
+      translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+
+    transform:
+      scale(1)
+      translateY(0);
+  }
+}
+
+@keyframes v44-copy-enter {
+  from {
+    opacity: 0;
+
+    transform:
+      translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+
+    transform:
+      translateY(0);
+  }
+}
+
+@keyframes v44-capabilities-enter {
+  from {
+    opacity: 0;
+
+    transform:
+      translateY(15px);
+  }
+
+  to {
+    opacity: 1;
+
+    transform:
+      translateY(0);
+  }
+}
+
+@media (
+  prefers-reduced-motion:
+  reduce
+) {
+  .landing-nav,
+  .hero-visual,
+  .hero-copy,
+  .capabilities {
+    opacity: 1;
+
+    animation:
+      none !important;
+
+    transform:
+      none !important;
+  }
+}

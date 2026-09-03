@@ -1,148 +1,696 @@
-<section class="page">
-  <header class="page-header">
-    <div>
-      <span class="eyebrow">
-        AI team
-      </span>
-
-      <h1>Meet your AI team</h1>
-
-      <p>
-        In Smart mode, Orbyntiq automatically chooses
-        specialized AI roles based on what your task needs.
-      </p>
-    </div>
-
-    <a
-      class="primary-action"
-      routerLink="/workspace"
+@if (platformState$ | async; as platform) {
+  <section class="agents-page">
+    <div
+      class="agents-atmosphere"
+      aria-hidden="true"
     >
-      Start a task
-    </a>
-  </header>
-
-  <section class="hero-card">
-    <div class="hero-symbol">
-      ◎
+      <span class="atmosphere-one"></span>
+      <span class="atmosphere-two"></span>
     </div>
 
-    <div>
-      <span class="section-label">
-        Automatic orchestration
-      </span>
+    <header class="agents-header">
+      <div>
+        <span class="eyebrow">
+          AI team
+        </span>
 
-      <h2>
-        You ask once. Orbyntiq coordinates the work.
-      </h2>
+        <h1>
+          Specialized intelligence,
+          coordinated automatically.
+        </h1>
 
-      <p>
-        You do not need to choose an agent manually.
-        Smart mode routes your request, gathers the
-        required information, and prepares the answer.
-      </p>
-    </div>
-  </section>
+        <p>
+          Smart mode understands your request,
+          selects the right specialist, and brings
+          the result back through one coordinated
+          Orbyntiq workflow.
+        </p>
+      </div>
 
-  <section class="team-section">
-    <div class="section-heading">
-      <span class="section-label">
-        Your specialists
-      </span>
+      <div class="header-actions">
+        <div
+          class="runtime-state"
+          [attr.data-state]="
+            platform.error
+              ? 'offline'
+              : platform.loading
+                ? 'loading'
+                : platform.data
+                    ?.components
+                    ?.multi_agent
+                    ?.status ??
+                  'unknown'
+          "
+        >
+          <span></span>
 
-      <h2>How the team works</h2>
-    </div>
+          <strong>
+            @if (platform.error) {
+              Runtime unavailable
+            } @else if (platform.loading) {
+              Checking runtime
+            } @else if (
+              platform.data
+                ?.components
+                ?.multi_agent
+                ?.status === 'healthy'
+            ) {
+              AI team ready
+            } @else {
+              Runtime needs attention
+            }
+          </strong>
+        </div>
 
-    <div class="team-grid">
-      @for (
-        member of members;
-        track member.role
-      ) {
-        <article class="member-card">
-          <div class="member-top">
-            <span class="member-icon">
-              {{ member.symbol }}
-            </span>
+        <a
+          class="primary-action"
+          routerLink="/workspace"
+        >
+          <span>
+            Start a task
+          </span>
 
-            <span class="ready-badge">
-              Built in
-            </span>
-          </div>
+          <svg viewBox="0 0 24 24">
+            <path
+              d="
+                M5 12h14
+                M14 7l5 5-5 5
+              "
+            />
+          </svg>
+        </a>
+      </div>
+    </header>
+
+
+    <section class="team-summary">
+      <div>
+        <strong>5</strong>
+        <span>workflow roles</span>
+      </div>
+
+      <div>
+        <strong>3</strong>
+        <span>specialist routes</span>
+      </div>
+
+      <div>
+        <strong>
+          {{
+            platform.data
+              ?.components
+              ?.llm
+              ?.model ??
+            'Local model'
+          }}
+        </strong>
+
+        <span>
+          configured AI model
+        </span>
+      </div>
+
+      <div class="summary-message">
+        <span class="summary-orbit">
+          <i></i>
+        </span>
+
+        <p>
+          You never need to select an agent
+          manually. The supervisor makes that
+          decision for each Smart mode request.
+        </p>
+      </div>
+    </section>
+
+
+    <section class="orchestration-section">
+      <header class="section-heading">
+        <div>
+          <span class="section-label">
+            Orchestration
+          </span>
+
+          <h2>
+            One request. One coordinated workflow.
+          </h2>
+        </div>
+
+        <span class="architecture-label">
+          LangGraph workflow
+        </span>
+      </header>
+
+      <div class="orchestration-map">
+        <article
+          class="
+            graph-node
+            graph-node--supervisor
+          "
+        >
+          <span class="node-icon">
+            <svg viewBox="0 0 24 24">
+              <circle
+                cx="12"
+                cy="12"
+                r="3"
+              />
+
+              <circle
+                cx="12"
+                cy="12"
+                r="8"
+              />
+
+              <path
+                d="
+                  M12 4V2
+                  M12 22v-2
+                  M4 12H2
+                  M22 12h-2
+                "
+              />
+            </svg>
+          </span>
 
           <div>
-            <h3>
-              {{ member.name }}
-            </h3>
-
-            <span class="technical-role">
-              {{ member.role }}
-            </span>
-          </div>
-
-          <p>
-            {{ member.description }}
-          </p>
-
-          <div class="member-usage">
-            <span>
-              When it helps
+            <span class="node-category">
+              Coordinator
             </span>
 
             <strong>
-              {{ member.whenUsed }}
+              Supervisor
             </strong>
+
+            <small>
+              Understands and routes
+            </small>
           </div>
+
+          <span class="node-state">
+            First
+          </span>
         </article>
-      }
-    </div>
+
+
+        <div
+          class="route-trunk route-trunk--top"
+          aria-hidden="true"
+        >
+          <span></span>
+        </div>
+
+
+        <div class="specialist-routes">
+          <article
+            class="
+              graph-node
+              graph-node--specialist
+              graph-node--research
+            "
+          >
+            <span class="node-icon">
+              <svg viewBox="0 0 24 24">
+                <circle
+                  cx="10"
+                  cy="10"
+                  r="5"
+                />
+
+                <path
+                  d="
+                    M14 14l5 5
+                    M7 10h6
+                    M10 7v6
+                  "
+                />
+              </svg>
+            </span>
+
+            <div>
+              <span class="node-category">
+                Knowledge
+              </span>
+
+              <strong>
+                Research
+              </strong>
+
+              <small>
+                Indexed documents
+              </small>
+            </div>
+
+            <span class="route-key">
+              research
+            </span>
+          </article>
+
+
+          <article
+            class="
+              graph-node
+              graph-node--specialist
+              graph-node--general
+            "
+          >
+            <span class="node-icon">
+              <svg viewBox="0 0 24 24">
+                <path
+                  d="
+                    M12 3
+                    l2.1 5.1
+                    L19 10
+                    l-4.9 1.9
+                    L12 17
+                    l-2.1-5.1
+                    L5 10
+                    l4.9-1.9
+                    Z
+                  "
+                />
+              </svg>
+            </span>
+
+            <div>
+              <span class="node-category">
+                Reasoning
+              </span>
+
+              <strong>
+                General
+              </strong>
+
+              <small>
+                Direct AI work
+              </small>
+            </div>
+
+            <span class="route-key">
+              general
+            </span>
+          </article>
+
+
+          <article
+            class="
+              graph-node
+              graph-node--specialist
+              graph-node--mcp
+            "
+          >
+            <span class="node-icon">
+              <svg viewBox="0 0 24 24">
+                <path
+                  d="
+                    M8 8h8v8H8z
+                    M12 3v5
+                    M12 16v5
+                    M3 12h5
+                    M16 12h5
+                  "
+                />
+              </svg>
+            </span>
+
+            <div>
+              <span class="node-category">
+                Tools
+              </span>
+
+              <strong>
+                MCP
+              </strong>
+
+              <small>
+                Tool capabilities
+              </small>
+            </div>
+
+            <span class="route-key">
+              mcp
+            </span>
+          </article>
+        </div>
+
+
+        <div
+          class="route-trunk route-trunk--bottom"
+          aria-hidden="true"
+        >
+          <span></span>
+        </div>
+
+
+        <article
+          class="
+            graph-node
+            graph-node--synthesizer
+          "
+        >
+          <span class="node-icon">
+            <svg viewBox="0 0 24 24">
+              <path
+                d="
+                  M5 7h14
+                  M7 12h10
+                  M9 17h6
+                "
+              />
+
+              <path
+                d="
+                  M4 4h16v16H4z
+                "
+              />
+            </svg>
+          </span>
+
+          <div>
+            <span class="node-category">
+              Composition
+            </span>
+
+            <strong>
+              Synthesizer
+            </strong>
+
+            <small>
+              Prepares the final response
+            </small>
+          </div>
+
+          <span class="node-state">
+            Final
+          </span>
+        </article>
+      </div>
+    </section>
+
+
+    <section class="roles-section">
+      <header class="section-heading">
+        <div>
+          <span class="section-label">
+            Team roles
+          </span>
+
+          <h2>
+            What each part of Orbyntiq does
+          </h2>
+        </div>
+      </header>
+
+      <div class="roles-grid">
+        @for (
+          member of members;
+          track member.id
+        ) {
+          <article
+            class="role-card"
+            [attr.data-agent]="
+              member.id
+            "
+          >
+            <header class="role-header">
+              <span class="role-icon">
+                @switch (member.id) {
+                  @case ('supervisor') {
+                    <svg viewBox="0 0 24 24">
+                      <circle
+                        cx="12"
+                        cy="12"
+                        r="3"
+                      />
+
+                      <circle
+                        cx="12"
+                        cy="12"
+                        r="8"
+                      />
+
+                      <path
+                        d="
+                          M12 4V2
+                          M12 22v-2
+                          M4 12H2
+                          M22 12h-2
+                        "
+                      />
+                    </svg>
+                  }
+
+                  @case ('research') {
+                    <svg viewBox="0 0 24 24">
+                      <circle
+                        cx="10"
+                        cy="10"
+                        r="5"
+                      />
+
+                      <path
+                        d="
+                          M14 14l5 5
+                          M7 10h6
+                          M10 7v6
+                        "
+                      />
+                    </svg>
+                  }
+
+                  @case ('general') {
+                    <svg viewBox="0 0 24 24">
+                      <path
+                        d="
+                          M12 3
+                          l2.1 5.1
+                          L19 10
+                          l-4.9 1.9
+                          L12 17
+                          l-2.1-5.1
+                          L5 10
+                          l4.9-1.9
+                          Z
+                        "
+                      />
+                    </svg>
+                  }
+
+                  @case ('mcp') {
+                    <svg viewBox="0 0 24 24">
+                      <path
+                        d="
+                          M8 8h8v8H8z
+                          M12 3v5
+                          M12 16v5
+                          M3 12h5
+                          M16 12h5
+                        "
+                      />
+                    </svg>
+                  }
+
+                  @case ('synthesizer') {
+                    <svg viewBox="0 0 24 24">
+                      <path
+                        d="
+                          M5 7h14
+                          M7 12h10
+                          M9 17h6
+                        "
+                      />
+
+                      <path
+                        d="
+                          M4 4h16v16H4z
+                        "
+                      />
+                    </svg>
+                  }
+                }
+              </span>
+
+              <span class="built-in">
+                Built in
+              </span>
+            </header>
+
+            <div class="role-title">
+              <span>
+                {{ member.category }}
+              </span>
+
+              <h3>
+                {{ member.name }}
+              </h3>
+
+              <small>
+                {{ member.role }}
+              </small>
+            </div>
+
+            <p>
+              {{ member.description }}
+            </p>
+
+            <footer>
+              <span>
+                When it runs
+              </span>
+
+              <strong>
+                {{ member.whenUsed }}
+              </strong>
+            </footer>
+          </article>
+        }
+      </div>
+    </section>
+
+
+    <section class="smart-flow">
+      <header class="section-heading">
+        <div>
+          <span class="section-label">
+            Smart mode
+          </span>
+
+          <h2>
+            From request to answer
+          </h2>
+        </div>
+
+        <a
+          class="flow-action"
+          routerLink="/workspace"
+        >
+          Try Smart mode
+
+          <svg viewBox="0 0 24 24">
+            <path
+              d="
+                M5 12h14
+                M14 7l5 5-5 5
+              "
+            />
+          </svg>
+        </a>
+      </header>
+
+      <div class="flow-steps">
+        <article>
+          <span class="step-number">
+            01
+          </span>
+
+          <div class="step-symbol">
+            <svg viewBox="0 0 24 24">
+              <path
+                d="
+                  M4 12h16
+                  M12 4v16
+                "
+              />
+            </svg>
+          </div>
+
+          <strong>
+            Receive
+          </strong>
+
+          <p>
+            Your Smart mode request enters
+            the multi-agent workflow.
+          </p>
+        </article>
+
+        <article>
+          <span class="step-number">
+            02
+          </span>
+
+          <div class="step-symbol">
+            <svg viewBox="0 0 24 24">
+              <path
+                d="
+                  M5 5h5v5H5z
+                  M14 5h5v5h-5z
+                  M9 14h6v5H9z
+                  M7.5 10v2h9v-2
+                  M12 12v2
+                "
+              />
+            </svg>
+          </div>
+
+          <strong>
+            Route
+          </strong>
+
+          <p>
+            The supervisor selects Research,
+            General, or MCP.
+          </p>
+        </article>
+
+        <article>
+          <span class="step-number">
+            03
+          </span>
+
+          <div class="step-symbol">
+            <svg viewBox="0 0 24 24">
+              <circle
+                cx="12"
+                cy="12"
+                r="7"
+              />
+
+              <path
+                d="
+                  M12 8v4l3 2
+                "
+              />
+            </svg>
+          </div>
+
+          <strong>
+            Execute
+          </strong>
+
+          <p>
+            The selected specialist handles
+            its part of the request.
+          </p>
+        </article>
+
+        <article>
+          <span class="step-number">
+            04
+          </span>
+
+          <div class="step-symbol">
+            <svg viewBox="0 0 24 24">
+              <path
+                d="
+                  M5 7h14
+                  M7 12h10
+                  M9 17h6
+                "
+              />
+            </svg>
+          </div>
+
+          <strong>
+            Synthesize
+          </strong>
+
+          <p>
+            Orbyntiq prepares one final
+            response for the conversation.
+          </p>
+        </article>
+      </div>
+    </section>
   </section>
-
-  <section class="flow-card">
-    <div class="section-heading">
-      <span class="section-label">
-        Smart mode
-      </span>
-
-      <h2>What happens after you press Send</h2>
-    </div>
-
-    <div class="flow">
-      <div>
-        <span>1</span>
-        <strong>Understand</strong>
-        <small>
-          Orbyntiq identifies what your request needs.
-        </small>
-      </div>
-
-      <b>→</b>
-
-      <div>
-        <span>2</span>
-        <strong>Route</strong>
-        <small>
-          The coordinator chooses the right specialist.
-        </small>
-      </div>
-
-      <b>→</b>
-
-      <div>
-        <span>3</span>
-        <strong>Work</strong>
-        <small>
-          Agents reason, research, or use tools.
-        </small>
-      </div>
-
-      <b>→</b>
-
-      <div>
-        <span>4</span>
-        <strong>Answer</strong>
-        <small>
-          The final result is returned to you.
-        </small>
-      </div>
-    </div>
-  </section>
-</section>
+}

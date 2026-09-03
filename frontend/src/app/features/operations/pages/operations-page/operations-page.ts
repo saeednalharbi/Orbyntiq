@@ -1,65 +1,94 @@
-import { Component } from '@angular/core';
+import {
+  AsyncPipe,
+  TitleCasePipe,
+} from '@angular/common';
+import {
+  Component,
+  OnInit,
+  inject,
+} from '@angular/core';
 
-interface SystemCapability {
-  readonly name: string;
-  readonly purpose: string;
-  readonly technology: string;
-  readonly status: string;
-}
+import {
+  PlatformComponentState,
+  PlatformStatusViewState,
+} from '../../../../core/models/platform-status.model';
+import {
+  PlatformStatusService,
+} from '../../../../core/services/platform-status.service';
 
 @Component({
   selector: 'app-operations-page',
-  imports: [],
+  imports: [
+    AsyncPipe,
+    TitleCasePipe,
+  ],
   templateUrl: './operations-page.html',
   styleUrl: './operations-page.scss',
 })
-export class OperationsPage {
-  readonly capabilities:
-    readonly SystemCapability[] = [
-      {
-        name: 'AI runtime',
-        purpose:
-          'Runs Orbyntiq language-model responses locally.',
-        technology:
-          'Ollama · qwen3:4b-instruct',
-        status:
-          'Managed locally',
-      },
-      {
-        name: 'Knowledge search',
-        purpose:
-          'Stores and retrieves semantic document knowledge.',
-        technology:
-          'Qdrant · qwen3-embedding:0.6b',
-        status:
-          'Vector storage',
-      },
-      {
-        name: 'Fast memory',
-        purpose:
-          'Stores temporary sessions, state, and cached data.',
-        technology:
-          'Redis',
-        status:
-          'Runtime state',
-      },
-      {
-        name: 'Persistent data',
-        purpose:
-          'Stores users, conversations, executions, and workflow history.',
-        technology:
-          'MongoDB',
-        status:
-          'Persistent storage',
-      },
-      {
-        name: 'Monitoring',
-        purpose:
-          'Collects metrics and distributed tracing data.',
-        technology:
-          'Prometheus · Grafana · Tempo · OpenTelemetry',
-        status:
-          'Observability',
-      },
-    ];
+export class OperationsPage
+implements OnInit {
+  private readonly platform =
+    inject(
+      PlatformStatusService,
+    );
+
+  readonly state$ =
+    this.platform.state$;
+
+  ngOnInit(): void {
+    this.platform.startPolling();
+  }
+
+  isHealthy(
+    status:
+      PlatformComponentState |
+      undefined,
+  ): boolean {
+    return (
+      status === 'healthy' ||
+      status === 'configured'
+    );
+  }
+
+  overallReady(
+    state:
+      PlatformStatusViewState,
+  ): boolean {
+    return (
+      state.data?.status ===
+      'healthy'
+    );
+  }
+
+  statusText(
+    status:
+      PlatformComponentState |
+      undefined,
+    loading: boolean,
+  ): string {
+    if (loading) {
+      return 'Checking';
+    }
+
+    if (!status) {
+      return 'Unavailable';
+    }
+
+    switch (status) {
+      case 'healthy':
+        return 'Healthy';
+
+      case 'configured':
+        return 'Configured';
+
+      case 'degraded':
+        return 'Degraded';
+
+      case 'disabled':
+        return 'Disabled';
+
+      case 'unavailable':
+        return 'Unavailable';
+    }
+  }
 }

@@ -1,120 +1,592 @@
-<section class="page">
-  <header class="page-header">
-    <div>
-      <span class="eyebrow">
-        Connected tools
-      </span>
+@if (state$ | async; as state) {
+  <section class="page">
+    <header class="page-header">
+      <div>
+        <span class="eyebrow">
+          Integrations
+        </span>
 
-      <h1>Tools Orbyntiq can use</h1>
+        <h1>
+          Model Context Protocol
+        </h1>
 
-      <p>
-        Smart mode can use built-in retrieval and MCP
-        capabilities when your request needs more than
-        a direct AI response.
-      </p>
-    </div>
+        <p>
+          Orbyntiq exposes tools, knowledge retrieval,
+          and grounded generation through its built-in
+          MCP server.
+        </p>
+      </div>
 
-    <a
-      routerLink="/workspace"
-      class="primary-action"
-    >
-      Try Smart mode
-    </a>
-  </header>
+      <a
+        routerLink="/workspace"
+        class="primary-action"
+      >
+        Try Smart mode
+      </a>
+    </header>
 
-  <section class="intro-card">
-    <span class="intro-icon">
-      ⌘
-    </span>
+    @if (state.error) {
+      <div
+        class="connection-warning"
+        role="status"
+      >
+        <span></span>
 
-    <div>
-      <strong>
-        Tools are selected automatically
-      </strong>
+        <div>
+          <strong>
+            Live MCP status unavailable
+          </strong>
 
-      <p>
-        You do not need to choose one before asking a
-        question. Orbyntiq's coordinator decides when
-        retrieval or another capability is useful.
-      </p>
-    </div>
-  </section>
+          <p>
+            {{
+              state.error
+            }}
+          </p>
+        </div>
+      </div>
+    }
 
-  <div class="tool-grid">
-    @for (
-      tool of tools;
-      track tool.name
-    ) {
-      <article class="tool-card">
-        <div class="tool-top">
-          <span class="tool-icon">
-            {{ tool.icon }}
+    <section class="status-panel">
+      <div class="status-primary">
+        <div
+          class="protocol-mark"
+          aria-hidden="true"
+        >
+          <span></span>
+          <i></i>
+        </div>
+
+        <div>
+          <div class="status-heading">
+            <h2>
+              Orbyntiq MCP
+            </h2>
+
+            <span
+              class="status-pill"
+              [class.status-pill--ready]="
+                mcpReady(state)
+              "
+            >
+              <i></i>
+
+              {{
+                statusLabel(
+                  mcpReady(state),
+                  state.loading
+                )
+              }}
+            </span>
+          </div>
+
+          <p>
+            Built-in MCP server for exposing Orbyntiq
+            capabilities to agents and compatible clients.
+          </p>
+        </div>
+      </div>
+
+      <div class="status-metrics">
+        <div>
+          <span>
+            Tools
           </span>
 
-          <span class="built-in">
+          <strong>3</strong>
+        </div>
+
+        <div>
+          <span>
+            Resources
+          </span>
+
+          <strong>1</strong>
+        </div>
+
+        <div>
+          <span>
+            Prompts
+          </span>
+
+          <strong>1</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="runtime-grid">
+      <article>
+        <div class="runtime-top">
+          <span class="runtime-icon">
+            R
+          </span>
+
+          <span
+            class="runtime-state"
+            [class.runtime-state--ready]="
+              retrieverReady(state)
+            "
+          >
+            <i></i>
+
+            {{
+              statusLabel(
+                retrieverReady(state),
+                state.loading
+              )
+            }}
+          </span>
+        </div>
+
+        <strong>
+          Semantic retrieval
+        </strong>
+
+        <p>
+          Qdrant-backed document search available to MCP.
+        </p>
+
+        <code>
+          SemanticRetriever
+        </code>
+      </article>
+
+      <article>
+        <div class="runtime-top">
+          <span class="runtime-icon">
+            G
+          </span>
+
+          <span
+            class="runtime-state"
+            [class.runtime-state--ready]="
+              ragReady(state)
+            "
+          >
+            <i></i>
+
+            {{
+              statusLabel(
+                ragReady(state),
+                state.loading
+              )
+            }}
+          </span>
+        </div>
+
+        <strong>
+          Grounded generation
+        </strong>
+
+        <p>
+          Retrieval-augmented answers with source metadata.
+        </p>
+
+        <code>
+          RAGService
+        </code>
+      </article>
+
+      <article>
+        <div class="runtime-top">
+          <span class="runtime-icon">
+            H
+          </span>
+
+          <span
+            class="
+              runtime-state
+              runtime-state--ready
+            "
+          >
+            <i></i>
+            Mounted
+          </span>
+        </div>
+
+        <strong>
+          Streamable HTTP
+        </strong>
+
+        <p>
+          MCP transport mounted directly in the FastAPI app.
+        </p>
+
+        <code>
+          /mcp
+        </code>
+      </article>
+
+      <article>
+        <div class="runtime-top">
+          <span class="runtime-icon">
+            A
+          </span>
+
+          <span
+            class="
+              runtime-state
+              runtime-state--ready
+            "
+          >
+            <i></i>
             Built in
           </span>
         </div>
 
-        <h2>
-          {{ tool.name }}
-        </h2>
-
-        <p>
-          {{ tool.description }}
-        </p>
-
-        <span class="technical-detail">
-          {{ tool.detail }}
-        </span>
-      </article>
-    }
-  </div>
-
-  <details class="advanced-card">
-    <summary>
-      <div>
         <strong>
-          Advanced information
+          MCP agent
         </strong>
 
-        <span>
-          How tool connectivity works
+        <p>
+          Specialist route inside the LangGraph workflow.
+        </p>
+
+        <code>
+          route: mcp
+        </code>
+      </article>
+    </section>
+
+    <section class="tools-section">
+      <header class="section-heading">
+        <div>
+          <span class="section-label">
+            Available tools
+          </span>
+
+          <h2>
+            Capabilities exposed through MCP
+          </h2>
+        </div>
+
+        <span class="tool-count">
+          3 registered
         </span>
+      </header>
+
+      <div class="tool-grid">
+        @for (
+          tool of tools;
+          track tool.technicalName
+        ) {
+          <article class="tool-card">
+            <div class="tool-card-top">
+              <div class="tool-symbol">
+                @switch (
+                  tool.requirement
+                ) {
+                  @case ('platform') {
+                    S
+                  }
+
+                  @case ('retriever') {
+                    R
+                  }
+
+                  @case ('rag') {
+                    G
+                  }
+                }
+              </div>
+
+              <span
+                class="tool-state"
+                [class.tool-state--ready]="
+                  toolReady(
+                    tool,
+                    state
+                  )
+                "
+              >
+                <i></i>
+
+                {{
+                  statusLabel(
+                    toolReady(
+                      tool,
+                      state
+                    ),
+                    state.loading
+                  )
+                }}
+              </span>
+            </div>
+
+            <div class="tool-copy">
+              <span class="tool-category">
+                {{ tool.category }}
+              </span>
+
+              <h3>
+                {{ tool.name }}
+              </h3>
+
+              <code>
+                {{ tool.technicalName }}
+              </code>
+
+              <p>
+                {{ tool.description }}
+              </p>
+            </div>
+
+            <div class="tool-footer">
+              @if (
+                tool.inputs.length > 0
+              ) {
+                <span>
+                  Inputs
+                </span>
+
+                <div class="input-tags">
+                  @for (
+                    input of tool.inputs;
+                    track input
+                  ) {
+                    <small>
+                      {{ input }}
+                    </small>
+                  }
+                </div>
+              } @else {
+                <span>
+                  No arguments required
+                </span>
+              }
+            </div>
+          </article>
+        }
       </div>
+    </section>
 
-      <b>›</b>
-    </summary>
+    <div class="lower-grid">
+      <section class="workflow-panel">
+        <header class="section-heading">
+          <div>
+            <span class="section-label">
+              Orchestration
+            </span>
 
-    <div class="advanced-content">
-      <p>
-        Orbyntiq exposes MCP through its FastAPI
-        application and uses an MCP agent inside the
-        multi-agent graph. Retrieval and RAG services
-        are configured during application startup.
-      </p>
+            <h2>
+              How MCP enters a Smart workflow
+            </h2>
+          </div>
+        </header>
 
-      <div class="detail-grid">
-        <div>
-          <span>Protocol</span>
-          <strong>Model Context Protocol</strong>
+        <div class="flow">
+          <div class="flow-node">
+            <span>
+              Request
+            </span>
+
+            <strong>
+              Smart task
+            </strong>
+          </div>
+
+          <div class="flow-arrow">
+            →
+          </div>
+
+          <div class="flow-node">
+            <span>
+              Coordinator
+            </span>
+
+            <strong>
+              Supervisor
+            </strong>
+          </div>
+
+          <div class="flow-arrow">
+            →
+          </div>
+
+          <div
+            class="
+              flow-node
+              flow-node--accent
+            "
+          >
+            <span>
+              Tools
+            </span>
+
+            <strong>
+              MCP agent
+            </strong>
+          </div>
+
+          <div class="flow-arrow">
+            →
+          </div>
+
+          <div class="flow-node">
+            <span>
+              Protocol
+            </span>
+
+            <strong>
+              MCP server
+            </strong>
+          </div>
         </div>
 
-        <div>
-          <span>Transport</span>
-          <strong>Streamable HTTP</strong>
-        </div>
+        <div class="capability-branches">
+          <div>
+            <span></span>
 
-        <div>
-          <span>Knowledge layer</span>
-          <strong>RAG + Qdrant</strong>
-        </div>
+            <strong>
+              Platform status
+            </strong>
+          </div>
 
-        <div>
-          <span>Agent integration</span>
-          <strong>MCP agent</strong>
+          <div>
+            <span></span>
+
+            <strong>
+              Knowledge search
+            </strong>
+          </div>
+
+          <div>
+            <span></span>
+
+            <strong>
+              RAG answer
+            </strong>
+          </div>
         </div>
-      </div>
+      </section>
+
+      <section class="primitives-panel">
+        <header class="section-heading">
+          <div>
+            <span class="section-label">
+              MCP primitives
+            </span>
+
+            <h2>
+              Resource and prompt
+            </h2>
+          </div>
+        </header>
+
+        <div class="primitive-list">
+          @for (
+            primitive of primitives;
+            track primitive.technicalName
+          ) {
+            <article>
+              <span class="primitive-type">
+                {{ primitive.type }}
+              </span>
+
+              <strong>
+                {{ primitive.name }}
+              </strong>
+
+              <code>
+                {{
+                  primitive.technicalName
+                }}
+              </code>
+
+              <p>
+                {{
+                  primitive.description
+                }}
+              </p>
+            </article>
+          }
+        </div>
+      </section>
     </div>
-  </details>
-</section>
+
+    <details class="technical-panel">
+      <summary>
+        <div>
+          <strong>
+            Technical configuration
+          </strong>
+
+          <span>
+            Runtime and protocol details
+          </span>
+        </div>
+
+        <b>›</b>
+      </summary>
+
+      <div class="technical-content">
+        <div>
+          <span>
+            Protocol
+          </span>
+
+          <code>
+            Model Context Protocol
+          </code>
+        </div>
+
+        <div>
+          <span>
+            Transport
+          </span>
+
+          <code>
+            Streamable HTTP
+          </code>
+        </div>
+
+        <div>
+          <span>
+            HTTP mount
+          </span>
+
+          <code>
+            /mcp
+          </code>
+        </div>
+
+        <div>
+          <span>
+            MCP server
+          </span>
+
+          <code>
+            orbyntiq
+          </code>
+        </div>
+
+        <div>
+          <span>
+            Retriever
+          </span>
+
+          <code>
+            {{
+              retrieverReady(state)
+                ? 'Configured'
+                : 'Unavailable'
+            }}
+          </code>
+        </div>
+
+        <div>
+          <span>
+            RAG service
+          </span>
+
+          <code>
+            {{
+              ragReady(state)
+                ? 'Configured'
+                : 'Unavailable'
+            }}
+          </code>
+        </div>
+      </div>
+    </details>
+  </section>
+}

@@ -1,121 +1,861 @@
-<section class="page">
-  <header class="page-header">
-    <div>
-      <span class="eyebrow">
-        System
+@if (state$ | async; as state) {
+  <section class="page">
+    <header class="page-header">
+      <div>
+        <span class="eyebrow">
+          Settings
+        </span>
+
+        <h1>
+          Local runtime
+        </h1>
+
+        <p>
+          Inspect the configuration, infrastructure,
+          AI runtime, and observability services
+          powering this Orbyntiq instance.
+        </p>
+      </div>
+
+      <span class="local-badge">
+        Local-first
       </span>
+    </header>
 
-      <h1>Orbyntiq system</h1>
+    @if (state.error) {
+      <div
+        class="error-banner"
+        role="alert"
+      >
+        <span></span>
 
-      <p>
-        A simple view of the services that power your
-        private AI workspace.
-      </p>
-    </div>
+        <div>
+          <strong>
+            Runtime status unavailable
+          </strong>
 
-    <span class="local-badge">
-      Local-first
-    </span>
-  </header>
+          <p>
+            {{ state.error }}
+          </p>
+        </div>
+      </div>
+    }
 
-  <section class="privacy-card">
-    <span class="privacy-icon">
-      ◉
-    </span>
+    <section class="runtime-hero">
+      <div class="runtime-identity">
+        <div
+          class="runtime-mark"
+          aria-hidden="true"
+        >
+          <span></span>
+        </div>
 
-    <div>
-      <strong>
-        Built around local infrastructure
-      </strong>
+        <div>
+          <div class="runtime-title">
+            <h2>
+              {{
+                state.data?.service ??
+                'Orbyntiq'
+              }}
+            </h2>
 
-      <p>
-        AI inference, retrieval, state, and persistence
-        can run on your own machine rather than depending
-        on a hosted AI platform.
-      </p>
-    </div>
-  </section>
+            <span
+              class="status-pill"
+              [class.status-pill--ready]="
+                overallReady(state)
+              "
+            >
+              <i></i>
 
-  <section class="system-section">
-    <span class="section-label">
-      Platform services
-    </span>
-
-    <h2>
-      What powers Orbyntiq
-    </h2>
-
-    <div class="system-list">
-      @for (
-        capability of capabilities;
-        track capability.name
-      ) {
-        <article>
-          <div class="service-copy">
-            <strong>
-              {{ capability.name }}
-            </strong>
-
-            <p>
-              {{ capability.purpose }}
-            </p>
+              @if (state.loading) {
+                Checking
+              } @else if (
+                overallReady(state)
+              ) {
+                Healthy
+              } @else {
+                Degraded
+              }
+            </span>
           </div>
 
-          <div class="service-technology">
+          <p>
+            {{
+              state.data?.environment ??
+              'Unknown'
+              | titlecase
+            }}
+            environment ·
+            private multi-agent runtime
+          </p>
+        </div>
+      </div>
+
+      <div class="hero-metrics">
+        <div>
+          <span>
+            Model
+          </span>
+
+          <strong>
+            {{
+              state.data?.components
+                ?.llm?.model ??
+              'Unavailable'
+            }}
+          </strong>
+        </div>
+
+        <div>
+          <span>
+            Provider
+          </span>
+
+          <strong>
+            {{
+              state.data?.components
+                ?.llm?.provider ??
+              'Unavailable'
+            }}
+          </strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <header class="section-heading">
+        <div>
+          <span class="section-label">
+            Infrastructure
+          </span>
+
+          <h2>
+            Platform services
+          </h2>
+        </div>
+
+        <span>
+          Live API state
+        </span>
+      </header>
+
+      <div class="service-grid">
+        <article>
+          <div class="service-top">
+            <span class="service-icon">
+              API
+            </span>
+
+            <span
+              class="service-status"
+              [class.service-status--ready]="
+                isHealthy(
+                  state.data?.components
+                    ?.api?.status
+                )
+              "
+            >
+              <i></i>
+
+              {{
+                statusText(
+                  state.data?.components
+                    ?.api?.status,
+                  state.loading
+                )
+              }}
+            </span>
+          </div>
+
+          <strong>
+            FastAPI
+          </strong>
+
+          <p>
+            {{
+              state.data?.components
+                ?.api?.detail ??
+              'API status unavailable.'
+            }}
+          </p>
+        </article>
+
+        <article>
+          <div class="service-top">
+            <span class="service-icon">
+              R
+            </span>
+
+            <span
+              class="service-status"
+              [class.service-status--ready]="
+                isHealthy(
+                  state.data?.components
+                    ?.redis?.status
+                )
+              "
+            >
+              <i></i>
+
+              {{
+                statusText(
+                  state.data?.components
+                    ?.redis?.status,
+                  state.loading
+                )
+              }}
+            </span>
+          </div>
+
+          <strong>
+            Redis
+          </strong>
+
+          <p>
+            Runtime state, sessions,
+            and cache storage.
+          </p>
+        </article>
+
+        <article>
+          <div class="service-top">
+            <span class="service-icon">
+              M
+            </span>
+
+            <span
+              class="service-status"
+              [class.service-status--ready]="
+                isHealthy(
+                  state.data?.components
+                    ?.mongodb?.status
+                )
+              "
+            >
+              <i></i>
+
+              {{
+                statusText(
+                  state.data?.components
+                    ?.mongodb?.status,
+                  state.loading
+                )
+              }}
+            </span>
+          </div>
+
+          <strong>
+            MongoDB
+          </strong>
+
+          <p>
+            Conversations, executions,
+            workflow history and persistence.
+          </p>
+        </article>
+
+        <article>
+          <div class="service-top">
+            <span class="service-icon">
+              Q
+            </span>
+
+            <span
+              class="service-status"
+              [class.service-status--ready]="
+                isHealthy(
+                  state.data?.components
+                    ?.qdrant?.status
+                )
+              "
+            >
+              <i></i>
+
+              {{
+                statusText(
+                  state.data?.components
+                    ?.qdrant?.status,
+                  state.loading
+                )
+              }}
+            </span>
+          </div>
+
+          <strong>
+            Qdrant
+          </strong>
+
+          <p>
+            Vector storage for semantic
+            document retrieval.
+          </p>
+        </article>
+
+        <article>
+          <div class="service-top">
+            <span class="service-icon">
+              A
+            </span>
+
+            <span
+              class="service-status"
+              [class.service-status--ready]="
+                isHealthy(
+                  state.data?.components
+                    ?.multi_agent?.status
+                )
+              "
+            >
+              <i></i>
+
+              {{
+                statusText(
+                  state.data?.components
+                    ?.multi_agent?.status,
+                  state.loading
+                )
+              }}
+            </span>
+          </div>
+
+          <strong>
+            Multi-agent runtime
+          </strong>
+
+          <p>
+            LangGraph supervisor,
+            specialists and synthesizer.
+          </p>
+        </article>
+
+        <article>
+          <div class="service-top">
+            <span class="service-icon">
+              MCP
+            </span>
+
+            <span
+              class="service-status"
+              [class.service-status--ready]="
+                isHealthy(
+                  state.data?.components
+                    ?.mcp?.status
+                )
+              "
+            >
+              <i></i>
+
+              {{
+                statusText(
+                  state.data?.components
+                    ?.mcp?.status,
+                  state.loading
+                )
+              }}
+            </span>
+          </div>
+
+          <strong>
+            MCP
+          </strong>
+
+          <p>
+            Retrieval, RAG, tools,
+            resources and prompts.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <div class="two-column">
+      <section class="panel">
+        <header class="panel-heading">
+          <div>
+            <span class="section-label">
+              AI runtime
+            </span>
+
+            <h2>
+              Models
+            </h2>
+          </div>
+        </header>
+
+        <div class="config-list">
+          <div class="config-row">
+            <div>
+              <strong>
+                Language model
+              </strong>
+
+              <span>
+                {{
+                  state.data?.components
+                    ?.llm?.provider ??
+                  'Unavailable'
+                }}
+              </span>
+            </div>
+
+            <code>
+              {{
+                state.data?.components
+                  ?.llm?.model ??
+                'Unavailable'
+              }}
+            </code>
+          </div>
+
+          <div class="config-row">
+            <div>
+              <strong>
+                Embedding model
+              </strong>
+
+              <span>
+                {{
+                  state.data?.runtime
+                    ?.embedding_provider ??
+                  'Unavailable'
+                }}
+              </span>
+            </div>
+
+            <code>
+              {{
+                state.data?.runtime
+                  ?.embedding_model ??
+                'Unavailable'
+              }}
+            </code>
+          </div>
+
+          <div class="config-row">
+            <div>
+              <strong>
+                Vector dimensions
+              </strong>
+
+              <span>
+                Embedding width
+              </span>
+            </div>
+
+            <code>
+              {{
+                state.data?.runtime
+                  ?.embedding_dimension ??
+                '—'
+              }}
+            </code>
+          </div>
+
+          <div class="config-row">
+            <div>
+              <strong>
+                LLM concurrency
+              </strong>
+
+              <span>
+                Maximum parallel generation
+              </span>
+            </div>
+
+            <code>
+              {{
+                state.data?.runtime
+                  ?.llm_max_concurrency ??
+                '—'
+              }}
+            </code>
+          </div>
+
+          <div class="config-row">
+            <div>
+              <strong>
+                Ollama keep alive
+              </strong>
+
+              <span>
+                Model residency target
+              </span>
+            </div>
+
+            <code>
+              {{
+                state.data?.runtime
+                  ?.ollama_keep_alive ??
+                'Unavailable'
+              }}
+            </code>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <header class="panel-heading">
+          <div>
+            <span class="section-label">
+              Retrieval
+            </span>
+
+            <h2>
+              RAG configuration
+            </h2>
+          </div>
+        </header>
+
+        <div class="config-list">
+          <div class="config-row">
+            <div>
+              <strong>
+                Collection
+              </strong>
+
+              <span>
+                Qdrant vector collection
+              </span>
+            </div>
+
+            <code>
+              {{
+                state.data?.runtime
+                  ?.qdrant_collection ??
+                'Unavailable'
+              }}
+            </code>
+          </div>
+
+          <div class="config-row">
+            <div>
+              <strong>
+                Retrieval limit
+              </strong>
+
+              <span>
+                Default context chunks
+              </span>
+            </div>
+
+            <code>
+              {{
+                state.data?.runtime
+                  ?.rag_retrieval_limit ??
+                '—'
+              }}
+            </code>
+          </div>
+
+          <div class="config-row">
+            <div>
+              <strong>
+                Chunk budget
+              </strong>
+
+              <span>
+                Characters per retrieved chunk
+              </span>
+            </div>
+
+            <code>
+              {{
+                state.data?.runtime
+                  ?.rag_chunk_character_limit ??
+                '—'
+              }}
+            </code>
+          </div>
+
+          <div class="config-row">
+            <div>
+              <strong>
+                Output budget
+              </strong>
+
+              <span>
+                Maximum RAG generation
+              </span>
+            </div>
+
+            <code>
+              {{
+                state.data?.runtime
+                  ?.rag_max_output_tokens ??
+                '—'
+              }}
+              tokens
+            </code>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <section class="section">
+      <header class="section-heading">
+        <div>
+          <span class="section-label">
+            Observability
+          </span>
+
+          <h2>
+            Monitoring and diagnostics
+          </h2>
+        </div>
+
+        <span
+          class="service-status"
+          [class.service-status--ready]="
+            isHealthy(
+              state.data?.components
+                ?.observability?.status
+            )
+          "
+        >
+          <i></i>
+
+          {{
+            statusText(
+              state.data?.components
+                ?.observability?.status,
+              state.loading
+            )
+          }}
+        </span>
+      </header>
+
+      <div class="observability-layout">
+        <div class="observability-grid">
+          <article>
             <span>
-              {{ capability.status }}
+              Metrics
             </span>
 
             <strong>
-              {{ capability.technology }}
+              {{
+                state.data?.components
+                  ?.observability
+                  ?.metrics_enabled
+                  ? 'Enabled'
+                  : 'Disabled'
+              }}
             </strong>
-          </div>
-        </article>
-      }
-    </div>
+
+            <code>
+              {{
+                state.data?.runtime
+                  ?.metrics_path ??
+                '/metrics'
+              }}
+            </code>
+          </article>
+
+          <article>
+            <span>
+              Tracing
+            </span>
+
+            <strong>
+              {{
+                state.data?.components
+                  ?.observability
+                  ?.tracing_enabled
+                  ? 'Enabled'
+                  : 'Disabled'
+              }}
+            </strong>
+
+            <code>
+              {{
+                state.data?.runtime
+                  ?.otel_service_name ??
+                'Unavailable'
+              }}
+            </code>
+          </article>
+
+          <article>
+            <span>
+              OTLP exporter
+            </span>
+
+            <strong>
+              {{
+                state.data?.runtime
+                  ?.otel_exporter_enabled
+                  ? 'Enabled'
+                  : 'Disabled'
+              }}
+            </strong>
+
+            <code>
+              OpenTelemetry
+            </code>
+          </article>
+        </div>
+
+        <div class="monitoring-links">
+          <a
+            href="http://localhost:3000"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <span>
+              Grafana
+            </span>
+
+            <strong>
+              Dashboards
+            </strong>
+
+            <b>↗</b>
+          </a>
+
+          <a
+            href="http://localhost:9090"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <span>
+              Prometheus
+            </span>
+
+            <strong>
+              Metrics
+            </strong>
+
+            <b>↗</b>
+          </a>
+
+          <a
+            href="http://localhost:3200"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <span>
+              Tempo
+            </span>
+
+            <strong>
+              Traces
+            </strong>
+
+            <b>↗</b>
+          </a>
+
+          <a
+            href="http://127.0.0.1:8000/docs"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <span>
+              FastAPI
+            </span>
+
+            <strong>
+              API docs
+            </strong>
+
+            <b>↗</b>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <details class="advanced-panel">
+      <summary>
+        <div>
+          <strong>
+            Advanced runtime details
+          </strong>
+
+          <span>
+            Read-only technical configuration
+          </span>
+        </div>
+
+        <b>›</b>
+      </summary>
+
+      <div class="advanced-content">
+        <div>
+          <span>
+            Environment
+          </span>
+
+          <code>
+            {{
+              state.data?.environment ??
+              'Unavailable'
+            }}
+          </code>
+        </div>
+
+        <div>
+          <span>
+            MCP retriever
+          </span>
+
+          <code>
+            {{
+              state.data?.components
+                ?.mcp
+                ?.retriever_configured
+                ? 'Configured'
+                : 'Unavailable'
+            }}
+          </code>
+        </div>
+
+        <div>
+          <span>
+            MCP RAG service
+          </span>
+
+          <code>
+            {{
+              state.data?.components
+                ?.mcp
+                ?.rag_configured
+                ? 'Configured'
+                : 'Unavailable'
+            }}
+          </code>
+        </div>
+
+        <div>
+          <span>
+            OTEL service
+          </span>
+
+          <code>
+            {{
+              state.data?.runtime
+                ?.otel_service_name ??
+              'Unavailable'
+            }}
+          </code>
+        </div>
+
+        <div>
+          <span>
+            Status refresh
+          </span>
+
+          <code>
+            15 seconds
+          </code>
+        </div>
+
+        <div>
+          <span>
+            Configuration mode
+          </span>
+
+          <code>
+            Environment variables
+          </code>
+        </div>
+      </div>
+    </details>
   </section>
-
-  <section class="observability-card">
-    <div>
-      <span class="section-label">
-        Advanced
-      </span>
-
-      <h2>
-        Monitoring and diagnostics
-      </h2>
-
-      <p>
-        Orbyntiq includes metrics, tracing, dashboards,
-        request IDs, and AI execution instrumentation for
-        deeper operational inspection.
-      </p>
-    </div>
-
-    <div class="observability-links">
-      <a
-        href="http://localhost:3000"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        Open Grafana
-      </a>
-
-      <a
-        href="http://localhost:9090"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        Open Prometheus
-      </a>
-
-      <a
-        href="http://127.0.0.1:8000/docs"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        API documentation
-      </a>
-    </div>
-  </section>
-</section>
+}

@@ -4,15 +4,16 @@
     messages.length > 0
   "
 >
-  <div class="conversation-toolbar">
-    <span class="conversation-context">
+  <header class="conversation-toolbar">
+    <div class="conversation-state">
       @if (mode === 'agent') {
-        <span class="context-orb"></span>
-        Smart mode
+        <span class="state-orb"></span>
+        <span>Smart workspace</span>
       } @else {
-        Direct model
+        <span class="state-orb state-orb--direct"></span>
+        <span>Direct model</span>
       }
-    </span>
+    </div>
 
     <button
       class="new-chat-button"
@@ -20,31 +21,29 @@
       [disabled]="isRunning"
       (click)="resetRequested.emit()"
     >
-      <svg
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-      >
-        <path
-          d="M12 5v14M5 12h14"
-        />
+      <svg viewBox="0 0 24 24">
+        <path d="M12 5v14M5 12h14" />
       </svg>
 
-      New chat
+      <span>New chat</span>
     </button>
-  </div>
+  </header>
 
   @if (error) {
     <div
       class="error-banner"
       role="alert"
     >
-      <span class="error-icon">
-        !
-      </span>
+      <div class="error-symbol">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 8v5M12 17h.01" />
+          <circle cx="12" cy="12" r="9" />
+        </svg>
+      </div>
 
       <div>
         <strong>
-          Orbyntiq couldn't complete that request
+          Something went wrong
         </strong>
 
         <span>{{ error }}</span>
@@ -55,101 +54,126 @@
         aria-label="Dismiss error"
         (click)="errorDismissed.emit()"
       >
-        &times;
+        <svg viewBox="0 0 24 24">
+          <path d="M6 6l12 12M18 6L6 18" />
+        </svg>
       </button>
     </div>
   }
 
-  <div class="message-stream">
+  <div
+    #messageStream
+    class="message-stream"
+  >
     @if (messages.length === 0) {
-      <div class="empty-state">
+      <section class="empty-state">
         <div
-          class="empty-orbit"
+          class="intelligence-mark"
           aria-hidden="true"
         >
-          <span class="empty-orbit-ring"></span>
+          <span class="orbit orbit--one"></span>
+          <span class="orbit orbit--two"></span>
 
-          <span
-            class="
-              empty-orbit-ring
-              empty-orbit-ring--two
-            "
-          ></span>
-
-          <div class="empty-core">
+          <div class="mark-core">
             <span></span>
           </div>
         </div>
 
-        <h2>
-          What can I help you with?
-        </h2>
+        <div class="empty-copy">
+          <h2>
+            What are you working on?
+          </h2>
 
-        <p>
-          @if (mode === 'agent') {
-            Orbyntiq can reason, search your
-            knowledge, and coordinate the right
-            AI agents automatically.
-          } @else {
-            Talk directly to your local AI model.
-          }
-        </p>
+          <p>
+            @if (mode === 'agent') {
+              Ask naturally. Orbyntiq can reason,
+              search your knowledge, and use the
+              right AI workflow automatically.
+            } @else {
+              Send a prompt directly to your
+              private local model.
+            }
+          </p>
+        </div>
 
         @if (mode === 'agent') {
-          <div class="suggestions">
+          <div class="starter-grid">
             @for (
               suggestion of suggestions;
-              track suggestion
+              track suggestion.title
             ) {
               <button
                 type="button"
                 (click)="
-                  useSuggestion(suggestion)
+                  useSuggestion(
+                    suggestion.title
+                  )
                 "
               >
-                <span class="suggestion-icon">
+                <span class="starter-icon">
                   @if ($index === 0) {
-                    ✦
+                    <svg viewBox="0 0 24 24">
+                      <path
+                        d="
+                          M5 6h14
+                          M5 11h10
+                          M5 16h7
+                        "
+                      />
+                    </svg>
                   } @else if ($index === 1) {
-                    ⌕
+                    <svg viewBox="0 0 24 24">
+                      <circle
+                        cx="11"
+                        cy="11"
+                        r="6"
+                      />
+                      <path
+                        d="M16 16l4 4"
+                      />
+                    </svg>
                   } @else {
-                    →
+                    <svg viewBox="0 0 24 24">
+                      <path
+                        d="
+                          M12 3v18
+                          M3 12h18
+                        "
+                      />
+                    </svg>
                   }
                 </span>
 
-                {{ suggestion }}
+                <span class="starter-copy">
+                  <strong>
+                    {{ suggestion.title }}
+                  </strong>
+
+                  <small>
+                    {{ suggestion.detail }}
+                  </small>
+                </span>
+
+                <span class="starter-arrow">
+                  <svg viewBox="0 0 24 24">
+                    <path
+                      d="
+                        M9 6l6 6-6 6
+                      "
+                    />
+                  </svg>
+                </span>
               </button>
             }
           </div>
         }
-      </div>
+      </section>
     }
 
     @for (
       message of messages;
       track message.id
     ) {
-      @if (
-        message.role === 'assistant' &&
-        $last &&
-        mode === 'agent' &&
-        execution?.status === 'completed'
-      ) {
-        <div class="completion-bar">
-          <span class="completion-check">
-            ✓
-          </span>
-
-          <strong>
-            {{ completedSummary() }}
-          </strong>
-
-          <span class="completion-note">
-            Workflow finished successfully
-          </span>
-        </div>
-      }
-
       <article
         class="message"
         [class.message--user]="
@@ -164,25 +188,21 @@
           $last
         "
       >
-        <div class="message-avatar">
-          @if (message.role === 'user') {
-            Y
-          } @else {
-            <span class="assistant-orb">
-              <span></span>
-            </span>
-          }
-        </div>
+        @if (
+          message.role === 'assistant'
+        ) {
+          <div class="assistant-avatar">
+            <span></span>
+          </div>
+        }
 
-        <div class="message-content">
-          <div class="message-meta">
-            <strong>
-              {{
-                message.role === 'user'
-                  ? 'You'
-                  : 'Orbyntiq'
-              }}
-            </strong>
+        <div class="message-body">
+          <div class="message-author">
+            {{
+              message.role === 'user'
+                ? 'You'
+                : 'Orbyntiq'
+            }}
           </div>
 
           <p>{{ message.content }}</p>
@@ -193,24 +213,27 @@
           ) {
             <details class="sources">
               <summary>
-                <span
-                  class="source-summary-icon"
-                >
-                  ⌕
+                <svg viewBox="0 0 24 24">
+                  <circle
+                    cx="11"
+                    cy="11"
+                    r="6"
+                  />
+                  <path d="M16 16l4 4" />
+                </svg>
+
+                <span>
+                  {{
+                    message.sources.length
+                  }}
+                  {{
+                    message.sources.length === 1
+                      ? 'source'
+                      : 'sources'
+                  }}
                 </span>
 
-                {{
-                  message.sources.length
-                }}
-                {{
-                  message.sources.length === 1
-                    ? 'source'
-                    : 'sources'
-                }}
-
-                <span class="source-chevron">
-                  ›
-                </span>
+                <i></i>
               </summary>
 
               <div class="source-list">
@@ -219,13 +242,11 @@
                   track $index
                 ) {
                   <div class="source-item">
-                    <div>
-                      <span
-                        class="source-file-icon"
-                      >
-                        DOC
-                      </span>
+                    <span class="file-mark">
+                      DOC
+                    </span>
 
+                    <div>
                       <strong>
                         {{
                           sourceLabel(
@@ -233,19 +254,19 @@
                           )
                         }}
                       </strong>
-                    </div>
 
-                    @if (
-                      sourceMeta(source)
-                    ) {
-                      <span>
-                        {{
-                          sourceMeta(
-                            source
-                          )
-                        }}
-                      </span>
-                    }
+                      @if (
+                        sourceMeta(source)
+                      ) {
+                        <span>
+                          {{
+                            sourceMeta(
+                              source
+                            )
+                          }}
+                        </span>
+                      }
+                    </div>
                   </div>
                 }
               </div>
@@ -253,6 +274,18 @@
           }
         </div>
       </article>
+
+      @if (
+        message.role === 'assistant' &&
+        $last &&
+        mode === 'agent' &&
+        execution?.status === 'completed'
+      ) {
+        <div class="completion-line">
+          <span></span>
+          {{ completedSummary() }}
+        </div>
+      }
     }
 
     @if (
@@ -260,12 +293,12 @@
       mode === 'agent'
     ) {
       <section
-        class="live-workflow"
+        class="activity"
         aria-live="polite"
       >
-        <header class="live-workflow-header">
-          <span class="live-orb">
-            <span></span>
+        <div class="activity-head">
+          <span class="activity-orb">
+            <i></i>
           </span>
 
           <div>
@@ -274,41 +307,25 @@
             </strong>
 
             <span>
-              {{
-                currentActivityDetail()
-              }}
+              {{ currentActivityDetail() }}
             </span>
           </div>
 
-          @if (
-            execution &&
-            execution.sources.length > 0
-          ) {
-            <span class="live-source-count">
-              {{
-                execution.sources.length
-              }}
-              sources
-            </span>
-          }
-        </header>
+          <span class="activity-live">
+            LIVE
+          </span>
+        </div>
 
-        <div class="workflow-events">
+        <div class="activity-timeline">
           @if (
             !execution ||
             execution.events.length === 0
           ) {
-            <div
-              class="
-                workflow-event
-                workflow-event--active
-              "
-            >
+            <div class="activity-step">
               <span
-                class="workflow-event-marker"
-              >
-                <i></i>
-              </span>
+                class="step-marker
+                  step-marker--active"
+              ></span>
 
               <div>
                 <strong>
@@ -329,48 +346,24 @@
                 event.eventType !==
                   'execution_failed'
               ) {
-                <div
-                  class="
-                    workflow-event
-                    workflow-event--complete
-                  "
-                >
+                <div class="activity-step">
                   <span
                     class="
-                      workflow-event-marker
+                      step-marker
+                      step-marker--done
                     "
-                  >
-                    ✓
-                  </span>
+                  ></span>
 
                   <div>
                     <strong>
-                      {{
-                        eventLabel(
-                          event
-                        )
-                      }}
+                      {{ eventLabel(event) }}
                     </strong>
-
-                    @if (
-                      event.agentName
-                    ) {
-                      <span>
-                        {{
-                          event.agentName
-                        }}
-                      </span>
-                    }
 
                     @if (
                       eventDetail(event)
                     ) {
                       <small>
-                        {{
-                          eventDetail(
-                            event
-                          )
-                        }}
+                        {{ eventDetail(event) }}
                       </small>
                     }
                   </div>
@@ -379,63 +372,51 @@
             }
           }
 
-          <div
-            class="
-              workflow-event
-              workflow-event--active
-            "
-          >
+          <div class="activity-step">
             <span
-              class="workflow-event-marker"
-            >
-              <i></i>
-            </span>
+              class="
+                step-marker
+                step-marker--active
+              "
+            ></span>
 
             <div>
               <strong>
                 {{ currentActivity() }}
               </strong>
-
-              <span>
-                Live
-              </span>
             </div>
           </div>
         </div>
       </section>
-    } @else if (
+    }
+
+    @if (
       isRunning &&
       mode === 'direct'
     ) {
       <section
-        class="
-          live-workflow
-          live-workflow--direct
-        "
+        class="direct-activity"
         aria-live="polite"
       >
-        <header class="live-workflow-header">
-          <span class="live-orb">
-            <span></span>
+        <span class="activity-orb">
+          <i></i>
+        </span>
+
+        <div>
+          <strong>
+            Generating locally
+          </strong>
+
+          <span>
+            Streaming from your private model
           </span>
+        </div>
 
-          <div>
-            <strong>
-              Generating locally
-            </strong>
-
-            <span>
-              Streaming from your local model
-            </span>
-          </div>
-        </header>
-
-        <div class="direct-wave">
-          <span></span>
-          <span></span>
-          <span></span>
-          <span></span>
-          <span></span>
+        <div class="wave">
+          <i></i>
+          <i></i>
+          <i></i>
+          <i></i>
         </div>
       </section>
     }
@@ -452,56 +433,66 @@
       "
     >
       <textarea
+        #composerInput
         [(ngModel)]="query"
         name="workspace-query"
-        rows="3"
+        rows="2"
         maxlength="20000"
         [placeholder]="
           mode === 'agent'
             ? 'Ask Orbyntiq anything...'
-            : 'Message the local model...'
+            : 'Message your local model...'
         "
         [disabled]="isRunning"
         (keydown)="handleKeydown($event)"
       ></textarea>
 
-      <div class="composer-footer">
-        <div class="composer-tools">
-          <span class="composer-tool">
-            <svg viewBox="0 0 24 24">
-              <path
-                d="M12 5v14M5 12h14"
-              />
-            </svg>
-          </span>
+      <footer class="composer-footer">
+        <div
+          class="composer-mode"
+          role="group"
+          aria-label="AI mode"
+        >
+          <button
+            type="button"
+            [class.composer-mode--active]="
+              mode === 'agent'
+            "
+            [disabled]="isRunning"
+            (click)="setMode('agent')"
+          >
+            <span></span>
+            Smart
+          </button>
 
-          @if (mode === 'agent') {
-            <span class="composer-chip">
-              <span
-                class="chip-dot"
-              ></span>
-              Smart
-            </span>
-
-            <span class="composer-chip">
-              Knowledge
-            </span>
-          } @else {
-            <span class="composer-chip">
-              Local model
-            </span>
-          }
+          <button
+            type="button"
+            [class.composer-mode--active]="
+              mode === 'direct'
+            "
+            [disabled]="isRunning"
+            (click)="setMode('direct')"
+          >
+            Direct
+          </button>
         </div>
 
-        <div class="composer-actions">
+        <div class="composer-end">
+          @if (
+            query.length > 0 &&
+            !isRunning
+          ) {
+            <span class="character-count">
+              {{ query.length }}
+            </span>
+          }
+
           @if (isRunning) {
             <button
               class="stop-button"
               type="button"
               aria-label="Stop response"
-              (click)="
-                cancelRequested.emit()
-              "
+              (click)="cancelRequested.emit()"
             >
               <span></span>
             </button>
@@ -525,19 +516,23 @@
             </button>
           }
         </div>
-      </div>
+      </footer>
     </div>
 
-    <div class="composer-meta">
-      <span>Enter to send</span>
+    <div class="composer-hint">
+      <span>
+        Enter to send
+      </span>
 
       <span>
         Shift + Enter for new line
       </span>
 
-      <span>
-        {{ query.length }} / 20,000
-      </span>
+      @if (mode === 'agent') {
+        <span>
+          Orbyntiq chooses the best workflow
+        </span>
+      }
     </div>
   </form>
 </section>

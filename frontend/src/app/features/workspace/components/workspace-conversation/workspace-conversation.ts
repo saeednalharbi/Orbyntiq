@@ -1,8 +1,13 @@
 import {
+  AfterViewInit,
   Component,
+  ElementRef,
   EventEmitter,
   Input,
+  OnChanges,
   Output,
+  SimpleChanges,
+  ViewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
@@ -21,9 +26,19 @@ import {
   templateUrl: './workspace-conversation.html',
   styleUrl: './workspace-conversation.scss',
 })
-export class WorkspaceConversation {
+export class WorkspaceConversation
+implements AfterViewInit, OnChanges {
+  @ViewChild('messageStream')
+  private readonly messageStream?:
+    ElementRef<HTMLDivElement>;
+
+  @ViewChild('composerInput')
+  private readonly composerInput?:
+    ElementRef<HTMLTextAreaElement>;
+
   @Input({ required: true })
-  messages: readonly WorkspaceMessage[] = [];
+  messages:
+    readonly WorkspaceMessage[] = [];
 
   @Input({ required: true })
   mode: WorkspaceMode = 'agent';
@@ -37,6 +52,10 @@ export class WorkspaceConversation {
   @Input()
   execution:
     WorkspaceExecution | null = null;
+
+  @Output()
+  readonly modeRequested =
+    new EventEmitter<WorkspaceMode>();
 
   @Output()
   readonly querySubmitted =
@@ -55,15 +74,55 @@ export class WorkspaceConversation {
     new EventEmitter<void>();
 
   readonly suggestions = [
-    'Summarize my knowledge',
-    'Research my documents',
-    'Explain something step by step',
+    {
+      title: 'Summarize my knowledge',
+      detail: 'Get the key ideas from your documents',
+    },
+    {
+      title: 'Research my documents',
+      detail: 'Find grounded answers with sources',
+    },
+    {
+      title: 'Explain something step by step',
+      detail: 'Break a complex topic into clear steps',
+    },
   ] as const;
 
   query = '';
 
+  ngAfterViewInit(): void {
+    this.focusComposer();
+  }
+
+  ngOnChanges(
+    changes: SimpleChanges,
+  ): void {
+    if (
+      changes['messages'] ||
+      changes['execution'] ||
+      changes['isRunning']
+    ) {
+      this.scrollToLatest();
+    }
+  }
+
+  setMode(
+    mode: WorkspaceMode,
+  ): void {
+    if (
+      this.isRunning ||
+      mode === this.mode
+    ) {
+      return;
+    }
+
+    this.modeRequested.emit(mode);
+    this.focusComposer();
+  }
+
   submit(): void {
-    const query = this.query.trim();
+    const query =
+      this.query.trim();
 
     if (
       query.length === 0 ||
@@ -74,6 +133,7 @@ export class WorkspaceConversation {
 
     this.querySubmitted.emit(query);
     this.query = '';
+    this.scrollToLatest();
   }
 
   useSuggestion(
@@ -84,6 +144,7 @@ export class WorkspaceConversation {
     }
 
     this.query = suggestion;
+    this.focusComposer();
   }
 
   handleKeydown(
@@ -145,10 +206,13 @@ export class WorkspaceConversation {
       'routing_completed'
     ) {
       const routeReason =
-        event.payload['route_reason'];
+        event.payload[
+          'route_reason'
+        ];
 
       if (
-        typeof routeReason === 'string'
+        typeof routeReason ===
+        'string'
       ) {
         return routeReason;
       }
@@ -171,11 +235,14 @@ export class WorkspaceConversation {
       );
 
     if (sourceCount > 0) {
-      return `${sourceCount} ${
-        sourceCount === 1
-          ? 'source'
-          : 'sources'
-      } found`;
+      return (
+        `${sourceCount} ` +
+        (
+          sourceCount === 1
+            ? 'source found'
+            : 'sources found'
+        )
+      );
     }
 
     return null;
@@ -213,19 +280,22 @@ export class WorkspaceConversation {
 
       case 'agent_started':
         if (
-          latest.agentName === 'research'
+          latest.agentName ===
+          'research'
         ) {
           return 'Researching your knowledge';
         }
 
         if (
-          latest.agentName === 'mcp'
+          latest.agentName ===
+          'mcp'
         ) {
           return 'Using connected tools';
         }
 
         if (
-          latest.agentName === 'general'
+          latest.agentName ===
+          'general'
         ) {
           return 'Reasoning through your request';
         }
@@ -254,24 +324,28 @@ export class WorkspaceConversation {
       return 'Preparing the request';
     }
 
-    if (execution.sources.length > 0) {
+    if (
+      execution.sources.length > 0
+    ) {
       return (
         `${execution.sources.length} ` +
-        `${
+        (
           execution.sources.length === 1
-            ? 'source'
-            : 'sources'
-        } found so far`
+            ? 'source found'
+            : 'sources found'
+        )
       );
     }
 
-    if (execution.route !== null) {
+    if (
+      execution.route !== null
+    ) {
       return this.routeDescription(
         execution.route,
       );
     }
 
-    return 'Following the live agent workflow';
+    return 'Following the live AI workflow';
   }
 
   completedSummary(): string {
@@ -282,11 +356,11 @@ export class WorkspaceConversation {
       return 'Completed';
     }
 
-    const parts = [
-      'Completed',
-    ];
+    const parts = ['Completed'];
 
-    if (execution.route !== null) {
+    if (
+      execution.route !== null
+    ) {
       parts.push(
         this.routeShortLabel(
           execution.route,
@@ -294,17 +368,22 @@ export class WorkspaceConversation {
       );
     }
 
-    if (execution.sources.length > 0) {
+    if (
+      execution.sources.length > 0
+    ) {
       parts.push(
-        `${execution.sources.length} ${
+        `${execution.sources.length} ` +
+        (
           execution.sources.length === 1
             ? 'source'
             : 'sources'
-        }`,
+        ),
       );
     }
 
-    return parts.join(' · ');
+    return parts.join(
+      ' \u00B7 ',
+    );
   }
 
   sourceLabel(
@@ -342,7 +421,9 @@ export class WorkspaceConversation {
       source['page_number'];
 
     if (typeof page === 'number') {
-      parts.push(`Page ${page}`);
+      parts.push(
+        `Page ${page}`,
+      );
     }
 
     const score =
@@ -365,7 +446,9 @@ export class WorkspaceConversation {
       );
     }
 
-    return parts.join(' · ');
+    return parts.join(
+      ' \u00B7 ',
+    );
   }
 
   private routeCompletedLabel(
@@ -374,24 +457,22 @@ export class WorkspaceConversation {
     const route =
       this.readRoute(
         event.payload['route'],
-      ) ?? this.execution?.route;
-
-    if (route === null) {
-      return 'Approach selected';
-    }
+      ) ??
+      this.execution?.route;
 
     switch (route) {
       case 'research':
-        return 'Research route selected';
+        return 'Research selected';
 
       case 'mcp':
-        return 'Tool route selected';
+        return 'Connected tools selected';
 
       case 'general':
-        return 'Direct reasoning selected';
-    }
+        return 'General reasoning selected';
 
-    return 'Approach selected';
+      default:
+        return 'Approach selected';
+    }
   }
 
   private routeActivity(
@@ -418,24 +499,22 @@ export class WorkspaceConversation {
     switch (route) {
       case 'research':
         return (
-          'Searching indexed knowledge ' +
-          'and grounding the response.'
+          'Searching your indexed knowledge ' +
+          'for relevant information'
         );
 
       case 'mcp':
         return (
-          'Using configured tools and ' +
-          'connected capabilities.'
+          'Working with your connected ' +
+          'tools and capabilities'
         );
 
       case 'general':
         return (
-          'Handling the request with ' +
-          'general AI reasoning.'
+          'Using general AI reasoning ' +
+          'for this request'
         );
     }
-
-    return 'Handling your request.';
   }
 
   private routeShortLabel(
@@ -451,8 +530,6 @@ export class WorkspaceConversation {
       case 'general':
         return 'General';
     }
-
-    return 'General';
   }
 
   private readRoute(
@@ -467,7 +544,9 @@ export class WorkspaceConversation {
 
   private sourceCountFromPayload(
     payload:
-      Readonly<Record<string, unknown>>,
+      Readonly<
+        Record<string, unknown>
+      >,
   ): number {
     const sources =
       payload['sources'];
@@ -487,5 +566,28 @@ export class WorkspaceConversation {
         (character) =>
           character.toUpperCase(),
       );
+  }
+
+  private focusComposer(): void {
+    queueMicrotask(() => {
+      this.composerInput
+        ?.nativeElement
+        .focus();
+    });
+  }
+
+  private scrollToLatest(): void {
+    queueMicrotask(() => {
+      const element =
+        this.messageStream
+          ?.nativeElement;
+
+      if (!element) {
+        return;
+      }
+
+      element.scrollTop =
+        element.scrollHeight;
+    });
   }
 }

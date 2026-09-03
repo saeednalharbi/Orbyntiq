@@ -1,4 +1,4 @@
-﻿.prompt-form {
+.prompt-form {
   padding: 16px 20px 18px;
   border-top: 1px solid #202735;
 }
@@ -46,7 +46,7 @@ textarea::placeholder {
   gap: 12px;
   align-items: center;
   color: #596477;
-  font-size: 9px;
+  font-size: 11px;
 }
 
 .generation-actions {
@@ -61,7 +61,7 @@ textarea::placeholder {
   color: #78859a;
   background: transparent;
   cursor: pointer;
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .reset-button:hover:not(:disabled) {
@@ -76,7 +76,7 @@ textarea::placeholder {
   background: #5266ef;
   color: #ffffff;
   cursor: pointer;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
 }
 
@@ -94,7 +94,7 @@ textarea::placeholder {
   background: rgba(120, 47, 57, 0.13);
   color: #e3a6ac;
   cursor: pointer;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
 }
 
@@ -120,7 +120,7 @@ textarea::placeholder {
 .prompt-hint {
   margin: 8px 2px 0;
   color: #535d6f;
-  font-size: 9px;
+  font-size: 11px;
 }
 
 @media (max-width: 600px) {

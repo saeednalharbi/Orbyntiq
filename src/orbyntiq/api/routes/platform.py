@@ -1,4 +1,4 @@
-﻿from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request
 
 from orbyntiq.api.schemas.platform import (
     LLMComponentStatus,
@@ -6,6 +6,7 @@ from orbyntiq.api.schemas.platform import (
     ObservabilityComponentStatus,
     PlatformComponents,
     PlatformComponentStatus,
+    PlatformRuntimeConfig,
     PlatformStatusResponse,
 )
 from orbyntiq.core.config import get_settings
@@ -79,40 +80,26 @@ def platform_status(
 
     mcp_services = get_mcp_services()
 
-    retriever_configured = (
-        mcp_services.retriever is not None
-    )
+    retriever_configured = mcp_services.retriever is not None
 
-    rag_configured = (
-        mcp_services.rag_service is not None
-    )
+    rag_configured = mcp_services.rag_service is not None
 
     if retriever_configured and rag_configured:
         mcp_status = "healthy"
-        mcp_detail = (
-            "MCP retrieval and RAG services are configured."
-        )
+        mcp_detail = "MCP retrieval and RAG services are configured."
     elif retriever_configured or rag_configured:
         mcp_status = "degraded"
-        mcp_detail = (
-            "MCP is only partially configured."
-        )
+        mcp_detail = "MCP is only partially configured."
     else:
         mcp_status = "unavailable"
-        mcp_detail = (
-            "MCP retrieval and RAG services are unavailable."
-        )
+        mcp_detail = "MCP retrieval and RAG services are unavailable."
 
     if settings.observability_enabled:
         observability_status = "configured"
-        observability_detail = (
-            "Observability is enabled."
-        )
+        observability_detail = "Observability is enabled."
     else:
         observability_status = "disabled"
-        observability_detail = (
-            "Observability is disabled."
-        )
+        observability_detail = "Observability is disabled."
 
     components = PlatformComponents(
         api=PlatformComponentStatus(
@@ -136,12 +123,8 @@ def platform_status(
         ),
         multi_agent=_dependency_status(
             multi_agent_available,
-            healthy_detail=(
-                "Multi-agent orchestration is configured."
-            ),
-            unavailable_detail=(
-                "Multi-agent orchestration is unavailable."
-            ),
+            healthy_detail=("Multi-agent orchestration is configured."),
+            unavailable_detail=("Multi-agent orchestration is unavailable."),
         ),
         mcp=MCPComponentStatus(
             status=mcp_status,
@@ -161,14 +144,8 @@ def platform_status(
         observability=ObservabilityComponentStatus(
             status=observability_status,
             detail=observability_detail,
-            metrics_enabled=(
-                settings.observability_enabled
-                and settings.metrics_enabled
-            ),
-            tracing_enabled=(
-                settings.observability_enabled
-                and settings.tracing_enabled
-            ),
+            metrics_enabled=(settings.observability_enabled and settings.metrics_enabled),
+            tracing_enabled=(settings.observability_enabled and settings.tracing_enabled),
         ),
     )
 
@@ -181,12 +158,22 @@ def platform_status(
     )
 
     overall_status = (
-        "healthy"
-        if all(
-            state == "healthy"
-            for state in critical_states
-        )
-        else "degraded"
+        "healthy" if all(state == "healthy" for state in critical_states) else "degraded"
+    )
+
+    runtime = PlatformRuntimeConfig(
+        embedding_provider=settings.embedding_provider,
+        embedding_model=settings.embedding_model,
+        embedding_dimension=settings.embedding_dimension,
+        qdrant_collection=settings.qdrant_collection,
+        rag_retrieval_limit=settings.rag_retrieval_limit,
+        rag_chunk_character_limit=(settings.rag_chunk_character_limit),
+        rag_max_output_tokens=settings.rag_max_output_tokens,
+        llm_max_concurrency=settings.llm_max_concurrency,
+        ollama_keep_alive=settings.ollama_keep_alive,
+        metrics_path=settings.metrics_path,
+        otel_service_name=settings.otel_service_name,
+        otel_exporter_enabled=settings.otel_exporter_enabled,
     )
 
     return PlatformStatusResponse(
@@ -194,4 +181,5 @@ def platform_status(
         service=settings.app_name,
         environment=settings.environment,
         components=components,
+        runtime=runtime,
     )

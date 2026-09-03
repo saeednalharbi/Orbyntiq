@@ -30,7 +30,7 @@
 
 .workspace-name {
   color: var(--color-text-muted);
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .menu-button {
@@ -62,7 +62,7 @@
 .runtime-status {
   gap: 7px;
   color: var(--color-text-muted);
-  font-size: 11px;
+  font-size: 12px;
   text-decoration: none;
 }
 
@@ -93,7 +93,7 @@
   padding-left: 18px;
   border-left: 1px solid var(--color-border);
   color: var(--color-text-faint);
-  font-size: 10px;
+  font-size: 11px;
 }
 
 @media (max-width: 900px) {
@@ -109,5 +109,139 @@
 
   .model-name {
     display: none;
+  }
+}
+
+
+/* ===== ORBYNTIQ V4.5 PRODUCT SHELL ===== */
+
+.topbar {
+  height: 64px;
+
+  padding:
+    0 28px;
+
+  border-bottom:
+    1px solid rgba(255, 255, 255, 0.045);
+
+  background:
+    rgba(8, 9, 12, 0.78);
+
+  backdrop-filter:
+    blur(20px)
+    saturate(130%);
+}
+
+.topbar-start,
+.topbar-end {
+  gap: 16px;
+}
+
+.workspace-context {
+  gap: 0;
+}
+
+.context-label {
+  color: #cfd1d8;
+
+  font-size: 12px;
+  font-weight: 580;
+}
+
+.context-value {
+  margin-top: 1px;
+
+  color: #555a64;
+
+  font-size: 10px;
+}
+
+.status-control {
+  gap: 7px;
+
+  min-height: 32px;
+
+  padding:
+    0 9px;
+
+  border:
+    1px solid transparent;
+
+  border-radius: 9px;
+
+  color: #6d727c;
+
+  font-size: 11px;
+
+  transition:
+    background 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease;
+}
+
+.status-control:hover {
+  border-color:
+    rgba(255, 255, 255, 0.05);
+
+  background:
+    rgba(255, 255, 255, 0.02);
+
+  color: #a6aab3;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+}
+
+.status-dot--healthy {
+  box-shadow:
+    0 0 9px
+    rgba(52, 211, 153, 0.35);
+}
+
+.separator {
+  height: 20px;
+
+  background:
+    rgba(255, 255, 255, 0.055);
+}
+
+.runtime-model {
+  gap: 0;
+}
+
+.runtime-model span {
+  color: #484c55;
+
+  font-size: 10px;
+}
+
+.runtime-model strong {
+  margin-top: 1px;
+
+  color: #777c87;
+
+  font-size: 11px;
+  font-weight: 520;
+}
+
+.menu-button {
+  border-color:
+    rgba(255, 255, 255, 0.07);
+
+  background:
+    rgba(255, 255, 255, 0.02);
+}
+
+.menu-button:hover {
+  background:
+    rgba(255, 255, 255, 0.04);
+}
+
+@media (max-width: 620px) {
+  .topbar {
+    padding:
+      0 16px;
   }
 }

@@ -1,67 +1,101 @@
-import { Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import {
+  AsyncPipe,
+} from '@angular/common';
+import {
+  Component,
+  inject,
+} from '@angular/core';
+import {
+  RouterLink,
+} from '@angular/router';
+
+import {
+  PlatformStatusService,
+} from '../../../../core/services/platform-status.service';
+
+type AgentIdentity =
+  | 'supervisor'
+  | 'research'
+  | 'general'
+  | 'mcp'
+  | 'synthesizer';
 
 interface AiTeamMember {
+  readonly id: AgentIdentity;
   readonly name: string;
   readonly role: string;
+  readonly category: string;
   readonly description: string;
   readonly whenUsed: string;
-  readonly symbol: string;
 }
 
 @Component({
   selector: 'app-agents-page',
-  imports: [RouterLink],
+  imports: [
+    AsyncPipe,
+    RouterLink,
+  ],
   templateUrl: './agents-page.html',
   styleUrl: './agents-page.scss',
 })
 export class AgentsPage {
+  private readonly platformStatus =
+    inject(PlatformStatusService);
+
+  readonly platformState$ =
+    this.platformStatus.state$;
+
   readonly members:
     readonly AiTeamMember[] = [
       {
+        id: 'supervisor',
         name: 'Coordinator',
         role: 'Supervisor',
-        symbol: '◎',
+        category: 'Orchestration',
         description:
-          'Understands your request and decides the best way for Orbyntiq to handle it.',
+          'Understands each Smart mode request and chooses the specialist route that should handle it.',
         whenUsed:
-          'Every Smart mode task starts here.',
+          'Every Smart mode execution begins with the supervisor.',
       },
       {
+        id: 'research',
         name: 'Researcher',
         role: 'Research agent',
-        symbol: '⌕',
+        category: 'Knowledge',
         description:
-          'Investigates questions that need information from your indexed knowledge.',
+          'Handles questions that need information from the indexed Orbyntiq knowledge base.',
         whenUsed:
-          'Used for research and document-grounded questions.',
+          'Document research and grounded knowledge questions.',
       },
       {
+        id: 'general',
         name: 'Assistant',
         role: 'General agent',
-        symbol: '✦',
+        category: 'Reasoning',
         description:
-          'Handles general reasoning and requests that do not require specialist tools.',
+          'Handles general requests that do not require knowledge retrieval or MCP tools.',
         whenUsed:
-          'Used for normal questions and reasoning tasks.',
+          'General reasoning and normal AI requests.',
       },
       {
+        id: 'mcp',
         name: 'Tool specialist',
         role: 'MCP agent',
-        symbol: '⌘',
+        category: 'Tools',
         description:
-          'Uses Orbyntiq tools and retrieval capabilities when a task needs external actions or knowledge.',
+          'Selects and uses configured MCP capabilities when a request needs an available tool.',
         whenUsed:
-          'Used when the coordinator decides tools are required.',
+          'Tasks routed to Orbyntiq tools and MCP capabilities.',
       },
       {
+        id: 'synthesizer',
         name: 'Response composer',
         role: 'Synthesizer',
-        symbol: '◇',
+        category: 'Composition',
         description:
-          'Combines the work of the AI team into one clear final response.',
+          'Takes the completed specialist work and prepares the final response returned to the user.',
         whenUsed:
-          'Finishes multi-step AI workflows.',
+          'The final stage of every successful specialist route.',
       },
     ];
 }

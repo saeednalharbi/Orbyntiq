@@ -1,1 +1,33 @@
 <router-outlet />
+
+@if (
+  productTransition.phase() !== 'idle'
+) {
+  <div
+    class="product-transition"
+    [attr.data-phase]="
+      productTransition.phase()
+    "
+    aria-hidden="true"
+  >
+    <div class="transition-light"></div>
+
+    <div class="transition-system">
+      <span class="transition-orbit transition-orbit--one">
+        <i></i>
+      </span>
+
+      <span class="transition-orbit transition-orbit--two">
+        <i></i>
+      </span>
+
+      <div class="transition-core">
+        <span></span>
+      </div>
+    </div>
+
+    <span class="transition-wordmark">
+      Orbyntiq
+    </span>
+  </div>
+}

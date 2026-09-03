@@ -134,7 +134,7 @@
   align-items: center;
   gap: 8px;
   color: var(--color-text-muted);
-  font-size: 11px;
+  font-size: 12px;
   text-decoration: none;
 }
 
@@ -165,7 +165,7 @@
 .version {
   padding-left: 15px;
   color: #3f424a;
-  font-size: 9px;
+  font-size: 11px;
 }
 
 @media (max-width: 900px) {
@@ -173,4 +173,261 @@
     box-shadow:
       18px 0 50px rgba(0, 0, 0, 0.45);
   }
+}
+
+
+/* ===== ORBYNTIQ V4.5 PRODUCT SHELL ===== */
+
+.sidebar {
+  position: relative;
+  overflow: hidden;
+
+  border-right:
+    1px solid rgba(255, 255, 255, 0.055);
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(12, 14, 19, 0.98),
+      rgba(9, 11, 15, 0.985)
+    );
+}
+
+.sidebar::before {
+  position: absolute;
+  width: 260px;
+  height: 260px;
+  top: -150px;
+  left: -90px;
+
+  border-radius: 50%;
+
+  background:
+    rgba(102, 92, 255, 0.055);
+
+  filter: blur(75px);
+
+  pointer-events: none;
+
+  content: "";
+}
+
+.brand {
+  position: relative;
+  z-index: 1;
+
+  min-height: 72px;
+
+  padding:
+    0 18px;
+
+  border-bottom:
+    1px solid rgba(255, 255, 255, 0.045);
+}
+
+.brand-link {
+  gap: 12px;
+}
+
+.brand-mark {
+  width: 34px;
+  height: 34px;
+
+  border-color:
+    rgba(132, 137, 255, 0.27);
+
+  border-radius: 11px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(124, 131, 255, 0.12),
+      rgba(124, 131, 255, 0.025)
+    );
+
+  box-shadow:
+    inset 0 1px 0
+    rgba(255, 255, 255, 0.035);
+}
+
+.brand-link:hover
+.brand-mark {
+  border-color:
+    rgba(132, 137, 255, 0.42);
+}
+
+.brand-copy strong {
+  font-size: 14px;
+  font-weight: 640;
+  letter-spacing: -0.02em;
+}
+
+.brand-copy small {
+  margin-top: 1px;
+
+  color: #5f6470;
+
+  font-size: 11px;
+}
+
+.navigation {
+  position: relative;
+  z-index: 1;
+
+  gap: 28px;
+
+  padding:
+    20px 11px;
+}
+
+.nav-group {
+  gap: 5px;
+}
+
+.nav-group-label {
+  padding:
+    0 11px 7px;
+
+  color: #4f535d;
+
+  font-size: 10px;
+  font-weight: 650;
+
+  letter-spacing: 0.11em;
+}
+
+.nav-item {
+  min-height: 42px;
+
+  gap: 11px;
+
+  padding:
+    8px 11px;
+
+  border-radius: 11px;
+
+  color: #777c87;
+
+  font-size: 13px;
+  font-weight: 520;
+
+  transition:
+    color 160ms ease,
+    background 160ms ease,
+    border-color 160ms ease,
+    transform 160ms ease;
+}
+
+.nav-item:hover {
+  background:
+    rgba(255, 255, 255, 0.025);
+
+  color: #bdc0c8;
+
+  transform:
+    translateX(2px);
+}
+
+.nav-item--active {
+  border-color:
+    rgba(124, 131, 255, 0.12);
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(124, 131, 255, 0.075),
+      rgba(124, 131, 255, 0.022)
+    );
+
+  color: #e0e2e8;
+
+  box-shadow:
+    inset 0 1px 0
+    rgba(255, 255, 255, 0.025);
+}
+
+.nav-item--active::before {
+  left: -12px;
+
+  width: 2px;
+  height: 18px;
+
+  background:
+    #858aff;
+
+  box-shadow:
+    0 0 12px
+    rgba(133, 138, 255, 0.42);
+}
+
+.nav-icon {
+  width: 19px;
+  height: 19px;
+
+  color: #696e79;
+}
+
+.nav-item--active
+.nav-icon {
+  color: #979bff;
+}
+
+.nav-item:hover
+.nav-icon {
+  color: #9398a4;
+}
+
+.nav-icon svg {
+  width: 17px;
+  height: 17px;
+
+  stroke-width: 1.55;
+}
+
+.sidebar-footer {
+  position: relative;
+  z-index: 1;
+
+  gap: 10px;
+
+  padding:
+    15px 17px 18px;
+
+  border-top:
+    1px solid rgba(255, 255, 255, 0.045);
+}
+
+.runtime {
+  padding:
+    8px 9px;
+
+  border-radius: 10px;
+
+  background:
+    rgba(255, 255, 255, 0.015);
+}
+
+.runtime-indicator {
+  width: 7px;
+  height: 7px;
+}
+
+.runtime-copy strong {
+  color: #858a95;
+
+  font-size: 11px;
+}
+
+.runtime-copy small {
+  color: #50545d;
+
+  font-size: 10px;
+}
+
+.version {
+  padding-left: 9px;
+
+  color: #454952;
+
+  font-size: 10px;
 }

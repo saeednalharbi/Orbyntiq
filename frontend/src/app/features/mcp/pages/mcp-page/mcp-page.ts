@@ -1,53 +1,202 @@
-import { Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import {
+  AsyncPipe,
+} from '@angular/common';
+import {
+  Component,
+  OnInit,
+  inject,
+} from '@angular/core';
+import {
+  RouterLink,
+} from '@angular/router';
 
-interface ToolCapability {
+import {
+  PlatformStatusViewState,
+} from '../../../../core/models/platform-status.model';
+import {
+  PlatformStatusService,
+} from '../../../../core/services/platform-status.service';
+
+type McpRequirement =
+  | 'platform'
+  | 'retriever'
+  | 'rag';
+
+interface McpTool {
   readonly name: string;
+  readonly technicalName: string;
+  readonly category: string;
   readonly description: string;
-  readonly detail: string;
-  readonly icon: string;
+  readonly requirement: McpRequirement;
+  readonly inputs: readonly string[];
+}
+
+interface McpPrimitive {
+  readonly type: 'Resource' | 'Prompt';
+  readonly name: string;
+  readonly technicalName: string;
+  readonly description: string;
 }
 
 @Component({
   selector: 'app-mcp-page',
-  imports: [RouterLink],
+  imports: [
+    AsyncPipe,
+    RouterLink,
+  ],
   templateUrl: './mcp-page.html',
   styleUrl: './mcp-page.scss',
 })
-export class McpPage {
+export class McpPage
+implements OnInit {
+  private readonly platform =
+    inject(
+      PlatformStatusService,
+    );
+
+  readonly state$ =
+    this.platform.state$;
+
   readonly tools:
-    readonly ToolCapability[] = [
+    readonly McpTool[] = [
       {
-        name: 'Knowledge search',
-        icon: '⌕',
+        name: 'Platform status',
+        technicalName:
+          'platform_status',
+        category: 'System',
         description:
-          'Finds relevant information from the documents stored in your knowledge base.',
-        detail:
-          'RAG + Qdrant retrieval',
+          'Returns the current Orbyntiq MCP service state and reports whether retrieval and RAG are configured.',
+        requirement: 'platform',
+        inputs: [],
       },
       {
-        name: 'MCP services',
-        icon: '⌘',
+        name: 'Search knowledge',
+        technicalName:
+          'search_knowledge',
+        category: 'Retrieval',
         description:
-          'Lets Orbyntiq agents access configured tools through the Model Context Protocol.',
-        detail:
-          'MCP transport and tools',
+          'Searches the indexed Qdrant knowledge base for semantically relevant document sections.',
+        requirement: 'retriever',
+        inputs: [
+          'query',
+          'limit',
+          'score threshold',
+          'document filter',
+        ],
       },
       {
-        name: 'Local AI',
-        icon: '✦',
+        name: 'Answer with RAG',
+        technicalName:
+          'answer_with_rag',
+        category: 'RAG',
         description:
-          'Runs language-model inference locally through Ollama.',
-        detail:
-          'qwen3:4b-instruct',
-      },
-      {
-        name: 'Embeddings',
-        icon: '◇',
-        description:
-          'Converts document sections into searchable semantic representations.',
-        detail:
-          'qwen3-embedding:0.6b',
+          'Retrieves relevant knowledge and generates a grounded answer with source metadata.',
+        requirement: 'rag',
+        inputs: [
+          'question',
+          'limit',
+          'score threshold',
+          'document filter',
+        ],
       },
     ];
+
+  readonly primitives:
+    readonly McpPrimitive[] = [
+      {
+        type: 'Resource',
+        name: 'Platform information',
+        technicalName:
+          'orbyntiq://platform/info',
+        description:
+          'Exposes basic information about the Orbyntiq multi-agent platform to MCP clients.',
+      },
+      {
+        type: 'Prompt',
+        name: 'RAG assistant',
+        technicalName:
+          'rag_assistant',
+        description:
+          'Creates a grounded assistant prompt that instructs the model to answer from retrieved Orbyntiq knowledge.',
+      },
+    ];
+
+  ngOnInit(): void {
+    this.platform.startPolling();
+  }
+
+  mcpReady(
+    state:
+      PlatformStatusViewState,
+  ): boolean {
+    return (
+      state.data?.components
+        .mcp.status ===
+      'healthy'
+    );
+  }
+
+  retrieverReady(
+    state:
+      PlatformStatusViewState,
+  ): boolean {
+    return (
+      state.data?.components
+        .mcp
+        .retriever_configured ??
+      false
+    );
+  }
+
+  ragReady(
+    state:
+      PlatformStatusViewState,
+  ): boolean {
+    return (
+      state.data?.components
+        .mcp
+        .rag_configured ??
+      false
+    );
+  }
+
+  toolReady(
+    tool: McpTool,
+    state:
+      PlatformStatusViewState,
+  ): boolean {
+    switch (
+      tool.requirement
+    ) {
+      case 'platform':
+        return (
+          state.data !== null &&
+          !state.error
+        );
+
+      case 'retriever':
+        return this
+          .retrieverReady(
+            state,
+          );
+
+      case 'rag':
+        return this.ragReady(
+          state,
+        );
+    }
+  }
+
+  statusLabel(
+    ready: boolean,
+    loading: boolean,
+  ): string {
+    if (loading) {
+      return 'Checking';
+    }
+
+    return ready
+      ? 'Ready'
+      : 'Unavailable';
+  }
 }

@@ -4,7 +4,10 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { Router } from '@angular/router';
+
+import {
+  ProductTransitionService,
+} from '../../../../core/services/product-transition.service';
 
 @Component({
   selector: 'app-overview-page',
@@ -13,8 +16,8 @@ import { Router } from '@angular/router';
   styleUrl: './overview-page.scss',
 })
 export class OverviewPage {
-  private readonly router =
-    inject(Router);
+  private readonly productTransition =
+    inject(ProductTransitionService);
 
   readonly leaving =
     signal(false);
@@ -54,10 +57,8 @@ export class OverviewPage {
 
     this.leaving.set(true);
 
-    window.setTimeout(() => {
-      void this.router.navigateByUrl(
-        '/workspace',
-      );
-    }, 420);
+    void this.productTransition.navigate(
+      '/workspace',
+    );
   }
 }

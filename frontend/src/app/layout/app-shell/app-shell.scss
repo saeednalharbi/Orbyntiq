@@ -115,3 +115,63 @@ app-topbar {
   position: relative;
   z-index: 1;
 }
+
+
+/* ===== ORBYNTIQ V4.5 PRODUCT SHELL ===== */
+
+.control-plane {
+  background:
+    #08090c;
+}
+
+.application {
+  position: relative;
+
+  min-height: 100dvh;
+}
+
+.application::before {
+  position: fixed;
+  z-index: -1;
+
+  width: 700px;
+  height: 500px;
+
+  top: -240px;
+  right: -180px;
+
+  border-radius: 50%;
+
+  background:
+    rgba(94, 82, 255, 0.028);
+
+  filter: blur(110px);
+
+  pointer-events: none;
+
+  content: "";
+}
+
+.content {
+  padding:
+    22px 34px 46px;
+}
+
+app-topbar {
+  backdrop-filter:
+    blur(20px);
+}
+
+@media (max-width: 1100px) {
+  .content {
+    padding:
+      22px 24px 40px;
+  }
+}
+
+@media (max-width: 620px) {
+  .content {
+    padding:
+      18px 16px 32px;
+  }
+}

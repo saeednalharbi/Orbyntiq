@@ -39,8 +39,11 @@ implements OnInit {
 
   query = '';
   limit = 5;
+
   scoreThreshold:
     number | null = null;
+
+  dragActive = false;
 
   ngOnInit(): void {
     this.knowledge.load();
@@ -84,8 +87,45 @@ implements OnInit {
       return;
     }
 
-    this.knowledge.ingest(file);
+    this.ingestFile(file);
     input.value = '';
+  }
+
+  onDragOver(
+    event: DragEvent,
+  ): void {
+    event.preventDefault();
+
+    if (
+      !this.dragActive
+    ) {
+      this.dragActive = true;
+    }
+  }
+
+  onDragLeave(
+    event: DragEvent,
+  ): void {
+    event.preventDefault();
+    this.dragActive = false;
+  }
+
+  onDrop(
+    event: DragEvent,
+  ): void {
+    event.preventDefault();
+
+    this.dragActive = false;
+
+    const file =
+      event.dataTransfer
+        ?.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    this.ingestFile(file);
   }
 
   clearError(): void {
@@ -94,21 +134,30 @@ implements OnInit {
 
   previewText(
     text: string,
-    maxLength = 320,
+    maxLength = 430,
   ): string {
-    const normalized = text
-      .replace(/\s+/g, ' ')
-      .trim();
+    const normalized =
+      text
+        .replace(/\s+/g, ' ')
+        .trim();
 
-    if (normalized.length <= maxLength) {
+    if (
+      normalized.length <=
+      maxLength
+    ) {
       return normalized;
     }
 
-    return `${normalized.slice(0, maxLength).trimEnd()}?`;
+    return (
+      `${normalized
+        .slice(0, maxLength)
+        .trimEnd()}…`
+    );
   }
 
   scorePercent(
-    result: KnowledgeSearchResult,
+    result:
+      KnowledgeSearchResult,
   ): number {
     return Math.round(
       Math.max(
@@ -122,7 +171,8 @@ implements OnInit {
   }
 
   fileType(
-    document: KnowledgeDocument,
+    document:
+      KnowledgeDocument,
   ): string {
     const extension =
       document.file_name
@@ -135,7 +185,8 @@ implements OnInit {
   }
 
   documentDescription(
-    document: KnowledgeDocument,
+    document:
+      KnowledgeDocument,
   ): string {
     const sections =
       `${document.chunk_count} ${
@@ -144,7 +195,9 @@ implements OnInit {
           : 'sections'
       }`;
 
-    if (document.page_count > 0) {
+    if (
+      document.page_count > 0
+    ) {
       const pages =
         `${document.page_count} ${
           document.page_count === 1
@@ -152,9 +205,17 @@ implements OnInit {
             : 'pages'
         }`;
 
-      return `${sections} · ${pages}`;
+      return (
+        `${sections} · ${pages}`
+      );
     }
 
     return sections;
+  }
+
+  private ingestFile(
+    file: File,
+  ): void {
+    this.knowledge.ingest(file);
   }
 }

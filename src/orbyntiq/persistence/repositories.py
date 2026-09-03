@@ -43,24 +43,14 @@ def _validate_pagination(
     offset: int,
 ) -> None:
     if limit < 1 or limit > MAX_PAGE_SIZE:
-        raise ValueError(
-            f"limit must be between 1 and {MAX_PAGE_SIZE}"
-        )
+        raise ValueError(f"limit must be between 1 and {MAX_PAGE_SIZE}")
 
     if offset < 0:
-        raise ValueError(
-            "offset must be greater than or equal to 0"
-        )
+        raise ValueError("offset must be greater than or equal to 0")
 
 
 def _model_document(
-    model: (
-        User
-        | Conversation
-        | Message
-        | AgentExecution
-        | WorkflowHistory
-    ),
+    model: (User | Conversation | Message | AgentExecution | WorkflowHistory),
 ) -> MongoDocument:
     document = model.model_dump(mode="python")
 
@@ -83,65 +73,45 @@ def _user_from_document(
     document: MongoDocument,
 ) -> User:
     try:
-        return User.model_validate(
-            _document_payload(document)
-        )
+        return User.model_validate(_document_payload(document))
     except ValidationError as exc:
-        raise RepositoryDataError(
-            "Invalid user document"
-        ) from exc
+        raise RepositoryDataError("Invalid user document") from exc
 
 
 def _conversation_from_document(
     document: MongoDocument,
 ) -> Conversation:
     try:
-        return Conversation.model_validate(
-            _document_payload(document)
-        )
+        return Conversation.model_validate(_document_payload(document))
     except ValidationError as exc:
-        raise RepositoryDataError(
-            "Invalid conversation document"
-        ) from exc
+        raise RepositoryDataError("Invalid conversation document") from exc
 
 
 def _message_from_document(
     document: MongoDocument,
 ) -> Message:
     try:
-        return Message.model_validate(
-            _document_payload(document)
-        )
+        return Message.model_validate(_document_payload(document))
     except ValidationError as exc:
-        raise RepositoryDataError(
-            "Invalid message document"
-        ) from exc
+        raise RepositoryDataError("Invalid message document") from exc
 
 
 def _agent_execution_from_document(
     document: MongoDocument,
 ) -> AgentExecution:
     try:
-        return AgentExecution.model_validate(
-            _document_payload(document)
-        )
+        return AgentExecution.model_validate(_document_payload(document))
     except ValidationError as exc:
-        raise RepositoryDataError(
-            "Invalid agent execution document"
-        ) from exc
+        raise RepositoryDataError("Invalid agent execution document") from exc
 
 
 def _workflow_history_from_document(
     document: MongoDocument,
 ) -> WorkflowHistory:
     try:
-        return WorkflowHistory.model_validate(
-            _document_payload(document)
-        )
+        return WorkflowHistory.model_validate(_document_payload(document))
     except ValidationError as exc:
-        raise RepositoryDataError(
-            "Invalid workflow history document"
-        ) from exc
+        raise RepositoryDataError("Invalid workflow history document") from exc
 
 
 class UserRepository:
@@ -149,26 +119,18 @@ class UserRepository:
         self,
         database: AsyncDatabase[MongoDocument],
     ) -> None:
-        self._collection = database[
-            USERS_COLLECTION
-        ]
+        self._collection = database[USERS_COLLECTION]
 
     async def create(
         self,
         user: User,
     ) -> User:
         try:
-            await self._collection.insert_one(
-                _model_document(user)
-            )
+            await self._collection.insert_one(_model_document(user))
         except DuplicateKeyError as exc:
-            raise RepositoryConflictError(
-                "User already exists"
-            ) from exc
+            raise RepositoryConflictError("User already exists") from exc
         except PyMongoError as exc:
-            raise RepositoryError(
-                "Failed to create user"
-            ) from exc
+            raise RepositoryError("Failed to create user") from exc
 
         return user
 
@@ -177,13 +139,9 @@ class UserRepository:
         user_id: str,
     ) -> User | None:
         try:
-            document = await self._collection.find_one(
-                {"_id": user_id}
-            )
+            document = await self._collection.find_one({"_id": user_id})
         except PyMongoError as exc:
-            raise RepositoryError(
-                "Failed to read user"
-            ) from exc
+            raise RepositoryError("Failed to read user") from exc
 
         if document is None:
             return None
@@ -197,13 +155,9 @@ class UserRepository:
         normalized_email = email.strip().lower()
 
         try:
-            document = await self._collection.find_one(
-                {"email": normalized_email}
-            )
+            document = await self._collection.find_one({"email": normalized_email})
         except PyMongoError as exc:
-            raise RepositoryError(
-                "Failed to read user"
-            ) from exc
+            raise RepositoryError("Failed to read user") from exc
 
         if document is None:
             return None
@@ -234,14 +188,9 @@ class UserRepository:
                 .limit(limit)
             )
 
-            return [
-                _user_from_document(document)
-                async for document in cursor
-            ]
+            return [_user_from_document(document) async for document in cursor]
         except PyMongoError as exc:
-            raise RepositoryError(
-                "Failed to list users"
-            ) from exc
+            raise RepositoryError("Failed to list users") from exc
 
 
 class ConversationRepository:
@@ -249,26 +198,18 @@ class ConversationRepository:
         self,
         database: AsyncDatabase[MongoDocument],
     ) -> None:
-        self._collection = database[
-            CONVERSATIONS_COLLECTION
-        ]
+        self._collection = database[CONVERSATIONS_COLLECTION]
 
     async def create(
         self,
         conversation: Conversation,
     ) -> Conversation:
         try:
-            await self._collection.insert_one(
-                _model_document(conversation)
-            )
+            await self._collection.insert_one(_model_document(conversation))
         except DuplicateKeyError as exc:
-            raise RepositoryConflictError(
-                "Conversation already exists"
-            ) from exc
+            raise RepositoryConflictError("Conversation already exists") from exc
         except PyMongoError as exc:
-            raise RepositoryError(
-                "Failed to create conversation"
-            ) from exc
+            raise RepositoryError("Failed to create conversation") from exc
 
         return conversation
 
@@ -277,13 +218,9 @@ class ConversationRepository:
         conversation_id: str,
     ) -> Conversation | None:
         try:
-            document = await self._collection.find_one(
-                {"_id": conversation_id}
-            )
+            document = await self._collection.find_one({"_id": conversation_id})
         except PyMongoError as exc:
-            raise RepositoryError(
-                "Failed to read conversation"
-            ) from exc
+            raise RepositoryError("Failed to read conversation") from exc
 
         if document is None:
             return None
@@ -304,9 +241,7 @@ class ConversationRepository:
 
         try:
             cursor = (
-                self._collection.find(
-                    {"user_id": user_id}
-                )
+                self._collection.find({"user_id": user_id})
                 .sort(
                     [
                         ("updated_at", DESCENDING),
@@ -317,14 +252,9 @@ class ConversationRepository:
                 .limit(limit)
             )
 
-            return [
-                _conversation_from_document(document)
-                async for document in cursor
-            ]
+            return [_conversation_from_document(document) async for document in cursor]
         except PyMongoError as exc:
-            raise RepositoryError(
-                "Failed to list conversations"
-            ) from exc
+            raise RepositoryError("Failed to list conversations") from exc
 
 
 class MessageRepository:
@@ -332,26 +262,18 @@ class MessageRepository:
         self,
         database: AsyncDatabase[MongoDocument],
     ) -> None:
-        self._collection = database[
-            MESSAGES_COLLECTION
-        ]
+        self._collection = database[MESSAGES_COLLECTION]
 
     async def create(
         self,
         message: Message,
     ) -> Message:
         try:
-            await self._collection.insert_one(
-                _model_document(message)
-            )
+            await self._collection.insert_one(_model_document(message))
         except DuplicateKeyError as exc:
-            raise RepositoryConflictError(
-                "Message already exists"
-            ) from exc
+            raise RepositoryConflictError("Message already exists") from exc
         except PyMongoError as exc:
-            raise RepositoryError(
-                "Failed to create message"
-            ) from exc
+            raise RepositoryError("Failed to create message") from exc
 
         return message
 
@@ -360,13 +282,9 @@ class MessageRepository:
         message_id: str,
     ) -> Message | None:
         try:
-            document = await self._collection.find_one(
-                {"_id": message_id}
-            )
+            document = await self._collection.find_one({"_id": message_id})
         except PyMongoError as exc:
-            raise RepositoryError(
-                "Failed to read message"
-            ) from exc
+            raise RepositoryError("Failed to read message") from exc
 
         if document is None:
             return None
@@ -387,12 +305,7 @@ class MessageRepository:
 
         try:
             cursor = (
-                self._collection.find(
-                    {
-                        "conversation_id":
-                            conversation_id
-                    }
-                )
+                self._collection.find({"conversation_id": conversation_id})
                 .sort(
                     [
                         ("created_at", ASCENDING),
@@ -403,14 +316,9 @@ class MessageRepository:
                 .limit(limit)
             )
 
-            return [
-                _message_from_document(document)
-                async for document in cursor
-            ]
+            return [_message_from_document(document) async for document in cursor]
         except PyMongoError as exc:
-            raise RepositoryError(
-                "Failed to list messages"
-            ) from exc
+            raise RepositoryError("Failed to list messages") from exc
 
 
 class AgentExecutionRepository:
@@ -418,26 +326,18 @@ class AgentExecutionRepository:
         self,
         database: AsyncDatabase[MongoDocument],
     ) -> None:
-        self._collection = database[
-            AGENT_EXECUTIONS_COLLECTION
-        ]
+        self._collection = database[AGENT_EXECUTIONS_COLLECTION]
 
     async def create(
         self,
         execution: AgentExecution,
     ) -> AgentExecution:
         try:
-            await self._collection.insert_one(
-                _model_document(execution)
-            )
+            await self._collection.insert_one(_model_document(execution))
         except DuplicateKeyError as exc:
-            raise RepositoryConflictError(
-                "Agent execution already exists"
-            ) from exc
+            raise RepositoryConflictError("Agent execution already exists") from exc
         except PyMongoError as exc:
-            raise RepositoryError(
-                "Failed to create agent execution"
-            ) from exc
+            raise RepositoryError("Failed to create agent execution") from exc
 
         return execution
 
@@ -451,14 +351,10 @@ class AgentExecutionRepository:
                 _model_document(execution),
             )
         except PyMongoError as exc:
-            raise RepositoryError(
-                "Failed to replace agent execution"
-            ) from exc
+            raise RepositoryError("Failed to replace agent execution") from exc
 
         if result.matched_count != 1:
-            raise RepositoryError(
-                "Agent execution does not exist"
-            )
+            raise RepositoryError("Agent execution does not exist")
 
         return execution
 
@@ -467,18 +363,48 @@ class AgentExecutionRepository:
         execution_id: str,
     ) -> AgentExecution | None:
         try:
-            document = await self._collection.find_one(
-                {"_id": execution_id}
-            )
+            document = await self._collection.find_one({"_id": execution_id})
         except PyMongoError as exc:
-            raise RepositoryError(
-                "Failed to read agent execution"
-            ) from exc
+            raise RepositoryError("Failed to read agent execution") from exc
 
         if document is None:
             return None
 
         return _agent_execution_from_document(document)
+
+    async def list_all(
+        self,
+        *,
+        limit: int = DEFAULT_PAGE_SIZE,
+        offset: int = 0,
+    ) -> list[AgentExecution]:
+        _validate_pagination(
+            limit=limit,
+            offset=offset,
+        )
+
+        try:
+            cursor = (
+                self._collection.find({})
+                .sort(
+                    [
+                        ("created_at", DESCENDING),
+                        ("_id", ASCENDING),
+                    ]
+                )
+                .skip(offset)
+                .limit(limit)
+            )
+
+            return [_agent_execution_from_document(document) async for document in cursor]
+        except PyMongoError as exc:
+            raise RepositoryError("Failed to list agent executions") from exc
+
+    async def count(self) -> int:
+        try:
+            return int(await self._collection.count_documents({}))
+        except PyMongoError as exc:
+            raise RepositoryError("Failed to count agent executions") from exc
 
     async def list_for_conversation(
         self,
@@ -494,12 +420,7 @@ class AgentExecutionRepository:
 
         try:
             cursor = (
-                self._collection.find(
-                    {
-                        "conversation_id":
-                            conversation_id
-                    }
-                )
+                self._collection.find({"conversation_id": conversation_id})
                 .sort(
                     [
                         ("created_at", DESCENDING),
@@ -510,16 +431,9 @@ class AgentExecutionRepository:
                 .limit(limit)
             )
 
-            return [
-                _agent_execution_from_document(
-                    document
-                )
-                async for document in cursor
-            ]
+            return [_agent_execution_from_document(document) async for document in cursor]
         except PyMongoError as exc:
-            raise RepositoryError(
-                "Failed to list agent executions"
-            ) from exc
+            raise RepositoryError("Failed to list agent executions") from exc
 
 
 class WorkflowHistoryRepository:
@@ -527,26 +441,18 @@ class WorkflowHistoryRepository:
         self,
         database: AsyncDatabase[MongoDocument],
     ) -> None:
-        self._collection = database[
-            WORKFLOW_HISTORY_COLLECTION
-        ]
+        self._collection = database[WORKFLOW_HISTORY_COLLECTION]
 
     async def create(
         self,
         event: WorkflowHistory,
     ) -> WorkflowHistory:
         try:
-            await self._collection.insert_one(
-                _model_document(event)
-            )
+            await self._collection.insert_one(_model_document(event))
         except DuplicateKeyError as exc:
-            raise RepositoryConflictError(
-                "Workflow history sequence already exists"
-            ) from exc
+            raise RepositoryConflictError("Workflow history sequence already exists") from exc
         except PyMongoError as exc:
-            raise RepositoryError(
-                "Failed to create workflow history"
-            ) from exc
+            raise RepositoryError("Failed to create workflow history") from exc
 
         return event
 
@@ -555,20 +461,14 @@ class WorkflowHistoryRepository:
         history_id: str,
     ) -> WorkflowHistory | None:
         try:
-            document = await self._collection.find_one(
-                {"_id": history_id}
-            )
+            document = await self._collection.find_one({"_id": history_id})
         except PyMongoError as exc:
-            raise RepositoryError(
-                "Failed to read workflow history"
-            ) from exc
+            raise RepositoryError("Failed to read workflow history") from exc
 
         if document is None:
             return None
 
-        return _workflow_history_from_document(
-            document
-        )
+        return _workflow_history_from_document(document)
 
     async def list_for_execution(
         self,
@@ -584,9 +484,7 @@ class WorkflowHistoryRepository:
 
         try:
             cursor = (
-                self._collection.find(
-                    {"execution_id": execution_id}
-                )
+                self._collection.find({"execution_id": execution_id})
                 .sort(
                     [
                         ("sequence", ASCENDING),
@@ -597,13 +495,6 @@ class WorkflowHistoryRepository:
                 .limit(limit)
             )
 
-            return [
-                _workflow_history_from_document(
-                    document
-                )
-                async for document in cursor
-            ]
+            return [_workflow_history_from_document(document) async for document in cursor]
         except PyMongoError as exc:
-            raise RepositoryError(
-                "Failed to list workflow history"
-            ) from exc
+            raise RepositoryError("Failed to list workflow history") from exc

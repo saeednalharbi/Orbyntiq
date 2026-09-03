@@ -22,6 +22,7 @@ from orbyntiq.api.middleware import (
     RequestLoggingMiddleware,
 )
 from orbyntiq.api.routes.agents import router as agents_router
+from orbyntiq.api.routes.executions import router as executions_router
 from orbyntiq.api.routes.knowledge import router as knowledge_router
 from orbyntiq.api.routes.llm import router as llm_router
 from orbyntiq.api.routes.platform import router as platform_router
@@ -307,6 +308,7 @@ if tracer_provider is not None:
 register_error_handlers(app)
 
 app.include_router(agents_router)
+app.include_router(executions_router)
 app.include_router(llm_router)
 app.include_router(platform_router)
 app.include_router(knowledge_router)

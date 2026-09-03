@@ -1,32 +1,78 @@
 @if (state$ | async; as state) {
-  <section class="page">
-    <header class="page-header">
-      <div>
+  <section class="knowledge-page">
+    <div
+      class="knowledge-atmosphere"
+      aria-hidden="true"
+    >
+      <span></span>
+    </div>
+
+    <header class="knowledge-header">
+      <div class="header-copy">
         <span class="eyebrow">
           Knowledge
         </span>
 
-        <h1>Your knowledge</h1>
+        <h1>
+          Your private knowledge
+        </h1>
 
         <p>
-          Add documents so Orbyntiq can use
-          your information when answering questions
-          and researching complex tasks.
+          Give Orbyntiq trusted information to
+          search, research, and reference while
+          working on your requests.
         </p>
       </div>
 
-      <button
-        class="refresh-button"
-        type="button"
-        [disabled]="state.loading"
-        (click)="refresh()"
-      >
-        {{
-          state.loading
-            ? 'Refreshing...'
-            : 'Refresh'
-        }}
-      </button>
+      <div class="header-actions">
+        <div class="knowledge-health">
+          <span
+            class="health-dot"
+            [class.health-dot--ready]="
+              state.status?.status === 'green'
+            "
+          ></span>
+
+          <span>
+            @if (
+              state.status?.status === 'green'
+            ) {
+              Ready
+            } @else if (state.loading) {
+              Loading
+            } @else {
+              Needs attention
+            }
+          </span>
+        </div>
+
+        <button
+          class="refresh-button"
+          type="button"
+          [disabled]="state.loading"
+          (click)="refresh()"
+          aria-label="Refresh knowledge"
+        >
+          <svg viewBox="0 0 24 24">
+            <path
+              d="
+                M20 6v5h-5
+                M4 18v-5h5
+                M18.5 9
+                A7 7 0 0 0 6.6 6.6
+                L4 9
+                M5.5 15
+                A7 7 0 0 0 17.4 17.4
+                L20 15
+              "
+            />
+          </svg>
+
+          <span>
+            Refresh
+          </span>
+        </button>
+      </div>
     </header>
 
     @if (state.error) {
@@ -34,9 +80,23 @@
         class="error-banner"
         role="alert"
       >
+        <div class="error-symbol">
+          <svg viewBox="0 0 24 24">
+            <circle
+              cx="12"
+              cy="12"
+              r="9"
+            />
+
+            <path
+              d="M12 8v5M12 17h.01"
+            />
+          </svg>
+        </div>
+
         <div>
           <strong>
-            Knowledge is currently unavailable
+            Knowledge is unavailable
           </strong>
 
           <span>
@@ -49,111 +109,139 @@
           aria-label="Dismiss message"
           (click)="clearError()"
         >
-          &times;
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M6 6l12 12M18 6L6 18"
+            />
+          </svg>
         </button>
       </div>
     }
 
-    <section class="summary-card">
-      <div class="summary-status">
-        <span
-          class="status-dot"
-          [class.status-dot--ready]="
-            state.status?.status === 'green'
-          "
-        ></span>
+    <section class="knowledge-overview">
+      <div>
+        <strong>
+          {{
+            state.status?.document_count ??
+            state.documents.length
+          }}
+        </strong>
 
-        <div>
-          <strong>
-            @if (
-              state.status?.status === 'green'
-            ) {
-              Knowledge is ready
-            } @else if (state.loading) {
-              Getting your knowledge ready
-            } @else {
-              Knowledge needs attention
-            }
-          </strong>
-
-          <span>
-            Orbyntiq can search the documents
-            you've added here.
-          </span>
-        </div>
-      </div>
-
-      <div class="summary-metrics">
-        <div>
-          <strong>
-            {{
+        <span>
+          {{
+            (
               state.status?.document_count ??
               state.documents.length
-            }}
-          </strong>
+            ) === 1
+              ? 'document'
+              : 'documents'
+          }}
+        </span>
+      </div>
 
-          <span>
-            {{
-              (
-                state.status?.document_count ??
-                state.documents.length
-              ) === 1
-                ? 'document'
-                : 'documents'
-            }}
-          </span>
-        </div>
+      <div>
+        <strong>
+          {{
+            state.status?.points_count ??
+            0
+          }}
+        </strong>
 
-        <div>
-          <strong>
-            {{
-              state.status?.points_count ??
-              '—'
-            }}
-          </strong>
+        <span>
+          indexed sections
+        </span>
+      </div>
 
-          <span>
-            indexed sections
-          </span>
-        </div>
+      <div class="overview-message">
+        <span class="overview-orb">
+          <i></i>
+        </span>
+
+        <p>
+          Orbyntiq searches these documents
+          automatically when Smart mode needs
+          grounded information.
+        </p>
       </div>
     </section>
 
-    <div class="content-grid">
-      <main class="main-column">
-        <section class="panel">
-          <header class="panel-header">
+    <div class="knowledge-layout">
+      <main class="knowledge-main">
+        <section class="search-workspace">
+          <header class="section-header">
             <div>
               <span class="section-label">
-                Search
+                Semantic search
               </span>
 
               <h2>
-                Search your knowledge
+                Find anything in your knowledge
               </h2>
 
               <p>
-                Find information across the
-                documents you've added.
+                Search by meaning, not only exact words.
               </p>
             </div>
           </header>
 
           <form
-            class="search-form"
+            class="knowledge-search"
             (ngSubmit)="search()"
           >
-            <textarea
-              [(ngModel)]="query"
-              name="knowledge-query"
-              rows="3"
-              maxlength="20000"
-              placeholder="What would you like to find?"
-              [disabled]="state.searching"
-            ></textarea>
+            <div class="search-input-shell">
+              <svg
+                class="search-icon"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <circle
+                  cx="11"
+                  cy="11"
+                  r="6"
+                />
 
-            <div class="search-footer">
-              <label class="document-filter">
+                <path
+                  d="M16 16l4 4"
+                />
+              </svg>
+
+              <textarea
+                [(ngModel)]="query"
+                name="knowledge-query"
+                rows="2"
+                maxlength="20000"
+                placeholder="Ask your knowledge a question..."
+                [disabled]="state.searching"
+              ></textarea>
+
+              <button
+                class="search-button"
+                type="submit"
+                [disabled]="
+                  state.searching ||
+                  !query.trim()
+                "
+                aria-label="Search knowledge"
+              >
+                @if (state.searching) {
+                  <span class="button-loader"></span>
+                } @else {
+                  <svg viewBox="0 0 24 24">
+                    <path
+                      d="
+                        M12 19V5
+                        M6.5 10.5
+                        L12 5
+                        l5.5 5.5
+                      "
+                    />
+                  </svg>
+                }
+              </button>
+            </div>
+
+            <div class="search-options">
+              <label>
                 <span>
                   Search in
                 </span>
@@ -182,32 +270,29 @@
                         document.document_id
                       "
                     >
-                      {{ document.file_name }}
+                      {{
+                        document.file_name
+                      }}
                     </option>
                   }
                 </select>
               </label>
 
-              <button
-                class="search-button"
-                type="submit"
-                [disabled]="
-                  state.searching ||
-                  !query.trim()
-                "
-              >
-                {{
-                  state.searching
-                    ? 'Searching...'
-                    : 'Search'
-                }}
-              </button>
+              @if (state.searchQuery) {
+                <button
+                  class="clear-search"
+                  type="button"
+                  (click)="clearSearch()"
+                >
+                  Clear results
+                </button>
+              }
             </div>
           </form>
         </section>
 
-        <section class="panel results-panel">
-          <header class="panel-header results-header">
+        <section class="results-section">
+          <header class="results-heading">
             <div>
               <span class="section-label">
                 Results
@@ -220,8 +305,8 @@
                   }}
                   {{
                     state.searchResults.length === 1
-                      ? 'match'
-                      : 'matches'
+                      ? 'relevant section'
+                      : 'relevant sections'
                   }}
                 } @else {
                   Search results
@@ -229,181 +314,223 @@
               </h2>
             </div>
 
-            @if (state.searchQuery) {
-              <button
-                class="text-button"
-                type="button"
-                (click)="clearSearch()"
-              >
-                Clear
-              </button>
+            @if (
+              state.searchQuery &&
+              !state.searching
+            ) {
+              <span class="query-label">
+                “{{ state.searchQuery }}”
+              </span>
             }
           </header>
 
           @if (state.searching) {
             <div class="searching-state">
-              <div class="working-dots">
-                <span></span>
-                <span></span>
+              <div class="search-orbit">
                 <span></span>
               </div>
 
               <strong>
-                Searching your documents...
+                Searching your knowledge
               </strong>
+
+              <p>
+                Finding the most relevant sections...
+              </p>
             </div>
           } @else if (
             state.searchResults.length === 0
           ) {
-            <div class="empty-state">
-              <div class="empty-icon">
-                <span></span>
+            <div class="results-empty">
+              <div class="empty-search-icon">
+                <svg viewBox="0 0 24 24">
+                  <circle
+                    cx="11"
+                    cy="11"
+                    r="6"
+                  />
+
+                  <path
+                    d="M16 16l4 4"
+                  />
+                </svg>
               </div>
 
               <strong>
                 @if (state.searchQuery) {
-                  No matching information found
+                  No relevant information found
                 } @else {
-                  Search your documents
+                  Your results will appear here
                 }
               </strong>
 
               <p>
                 @if (state.searchQuery) {
-                  Try using different words or
-                  searching across all documents.
+                  Try another phrase or search
+                  across all documents.
                 } @else {
-                  Ask a question above and Orbyntiq
-                  will find the most relevant sections.
+                  Ask a question above to search
+                  across your indexed knowledge.
                 }
               </p>
             </div>
           }
 
-          @for (
-            result of state.searchResults;
-            track result.id
-          ) {
-            <article class="result-card">
-              <div class="result-header">
-                <div class="result-source">
-                  <span class="file-icon">
-                    DOC
-                  </span>
+          <div class="results-list">
+            @for (
+              result of state.searchResults;
+              track result.id
+            ) {
+              <article class="result-card">
+                <header class="result-header">
+                  <div class="result-document">
+                    <span class="result-file">
+                      DOC
+                    </span>
 
-                  <div>
+                    <div>
+                      <strong>
+                        {{ result.file_name }}
+                      </strong>
+
+                      <span>
+                        @if (
+                          result.page_number !== null
+                        ) {
+                          Page
+                          {{ result.page_number }}
+                          ·
+                        }
+
+                        Section
+                        {{ result.chunk_index + 1 }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="match-score">
                     <strong>
-                      {{ result.file_name }}
+                      {{
+                        scorePercent(result)
+                      }}%
                     </strong>
 
                     <span>
-                      @if (
-                        result.page_number !== null
-                      ) {
-                        Page
-                        {{ result.page_number }}
-                        ·
-                      }
-
-                      Section
-                      {{ result.chunk_index + 1 }}
+                      match
                     </span>
                   </div>
+                </header>
+
+                <p class="result-preview">
+                  {{
+                    previewText(
+                      result.text
+                    )
+                  }}
+                </p>
+
+                <div class="result-footer">
+                  <details class="section-details">
+                    <summary>
+                      Read full section
+                    </summary>
+
+                    <p>
+                      {{ result.text }}
+                    </p>
+                  </details>
+
+                  <details class="technical-details">
+                    <summary>
+                      Details
+                    </summary>
+
+                    <div class="technical-grid">
+                      <div>
+                        <span>
+                          Similarity score
+                        </span>
+
+                        <code>
+                          {{
+                            result.score
+                              | number:'1.3-3'
+                          }}
+                        </code>
+                      </div>
+
+                      <div>
+                        <span>
+                          Section
+                        </span>
+
+                        <code>
+                          {{
+                            result.chunk_index
+                          }}
+                        </code>
+                      </div>
+
+                      <div>
+                        <span>
+                          Document ID
+                        </span>
+
+                        <code>
+                          {{
+                            result.document_id
+                          }}
+                        </code>
+                      </div>
+
+                      <div>
+                        <span>
+                          Source path
+                        </span>
+
+                        <code>
+                          {{
+                            result.source_path
+                          }}
+                        </code>
+                      </div>
+                    </div>
+                  </details>
                 </div>
-
-                <span class="match-badge">
-                  {{ scorePercent(result) }}%
-                  match
-                </span>
-              </div>
-
-              <p class="result-text result-preview">
-                {{ previewText(result.text) }}
-              </p>
-
-              <div class="result-actions">
-                <details class="full-section">
-                  <summary>
-                    Show full section
-                  </summary>
-
-                  <p class="full-section-text">
-                    {{ result.text }}
-                  </p>
-                </details>
-
-                <details class="result-details">
-                  <summary>
-                    More details
-                  </summary>
-
-                  <div class="technical-grid">
-                  <div>
-                    <span>Raw score</span>
-
-                    <code>
-                      {{
-                        result.score
-                        | number:'1.3-3'
-                      }}
-                    </code>
-                  </div>
-
-                  <div>
-                    <span>Section</span>
-
-                    <code>
-                      {{ result.chunk_index }}
-                    </code>
-                  </div>
-
-                  <div>
-                    <span>Document ID</span>
-
-                    <code>
-                      {{ result.document_id }}
-                    </code>
-                  </div>
-
-                  <div>
-                    <span>Source</span>
-
-                    <code>
-                      {{ result.source_path }}
-                    </code>
-                  </div>
-                  </div>
-                </details>
-              </div>
-            </article>
-          }
+              </article>
+            }
+          </div>
         </section>
       </main>
 
-      <aside class="side-column">
-        <section class="panel add-panel">
-          <header class="panel-header">
-            <div>
-              <span class="section-label">
-                Add knowledge
-              </span>
+      <aside class="knowledge-sidebar">
+        <section class="upload-card">
+          <header>
+            <span class="section-label">
+              Add knowledge
+            </span>
 
-              <h2>
-                Add a document
-              </h2>
+            <h2>
+              Add a document
+            </h2>
 
-              <p>
-                Upload information you want
-                Orbyntiq to understand.
-              </p>
-            </div>
+            <p>
+              Files are indexed locally and become
+              available to Smart mode.
+            </p>
           </header>
 
           <label
             class="upload-zone"
+            [class.upload-zone--active]="
+              dragActive
+            "
             [class.upload-zone--busy]="
               state.uploading
             "
+            (dragover)="onDragOver($event)"
+            (dragleave)="onDragLeave($event)"
+            (drop)="onDrop($event)"
           >
             <input
               type="file"
@@ -412,24 +539,38 @@
               (change)="upload($event)"
             />
 
-            <div class="upload-icon">
-              +
+            <div class="upload-mark">
+              @if (state.uploading) {
+                <span class="upload-spinner"></span>
+              } @else {
+                <svg viewBox="0 0 24 24">
+                  <path
+                    d="
+                      M12 16V4
+                      M7 9l5-5 5 5
+                      M5 14v5h14v-5
+                    "
+                  />
+                </svg>
+              }
             </div>
 
             <strong>
-              {{
-                state.uploading
-                  ? 'Adding document...'
-                  : 'Choose a document'
-              }}
+              @if (state.uploading) {
+                Adding document
+              } @else if (dragActive) {
+                Drop it here
+              } @else {
+                Drop a document here
+              }
             </strong>
 
             <span>
-              PDF, TXT or Markdown
+              or click to browse
             </span>
 
             <small>
-              Maximum file size: 10 MB
+              PDF, TXT or Markdown · up to 10 MB
             </small>
           </label>
 
@@ -440,11 +581,13 @@
             <div class="upload-progress">
               <div>
                 <span>
-                  Uploading
+                  Indexing document
                 </span>
 
                 <strong>
-                  {{ state.uploadProgress }}%
+                  {{
+                    state.uploadProgress
+                  }}%
                 </strong>
               </div>
 
@@ -459,12 +602,18 @@
           }
 
           @if (state.lastIngestion) {
-            <div class="success-message">
-              <span class="success-dot"></span>
+            <div class="upload-success">
+              <span class="success-check">
+                <svg viewBox="0 0 24 24">
+                  <path
+                    d="M6 12l4 4 8-8"
+                  />
+                </svg>
+              </span>
 
               <div>
                 <strong>
-                  Document added
+                  Ready to use
                 </strong>
 
                 <span>
@@ -485,41 +634,67 @@
           }
         </section>
 
-        <section class="panel documents-panel">
-          <header class="panel-header">
+        <section class="library-card">
+          <header class="library-header">
             <div>
               <span class="section-label">
-                Documents
+                Library
               </span>
 
               <h2>
-                Your documents
+                Documents
               </h2>
-
-              <p>
-                {{
-                  state.documents.length
-                }}
-                {{
-                  state.documents.length === 1
-                    ? 'document'
-                    : 'documents'
-                }}
-                available to Orbyntiq.
-              </p>
             </div>
+
+            <span class="library-count">
+              {{
+                state.documents.length
+              }}
+            </span>
           </header>
+
+          <button
+            type="button"
+            class="all-documents-row"
+            [class.document-selected]="
+              state.selectedDocumentId === null
+            "
+            (click)="selectDocument('')"
+          >
+            <span class="all-docs-icon">
+              <svg viewBox="0 0 24 24">
+                <path
+                  d="
+                    M4 5h7v6H4z
+                    M13 5h7v6h-7z
+                    M4 13h7v6H4z
+                    M13 13h7v6h-7z
+                  "
+                />
+              </svg>
+            </span>
+
+            <span>
+              <strong>
+                All documents
+              </strong>
+
+              <small>
+                Search the full library
+              </small>
+            </span>
+          </button>
 
           @if (
             state.documents.length === 0
           ) {
-            <div class="documents-empty">
+            <div class="library-empty">
               <strong>
                 No documents yet
               </strong>
 
               <span>
-                Add your first document above.
+                Add your first file above.
               </span>
             </div>
           }
@@ -529,26 +704,43 @@
               document of state.documents;
               track document.document_id
             ) {
-              <article class="document-row">
-                <div class="file-type">
-                  {{ fileType(document) }}
-                </div>
+              <button
+                type="button"
+                class="document-row"
+                [class.document-selected]="
+                  state.selectedDocumentId ===
+                  document.document_id
+                "
+                (click)="
+                  selectDocument(
+                    document.document_id
+                  )
+                "
+              >
+                <span class="file-type">
+                  {{
+                    fileType(document)
+                  }}
+                </span>
 
-                <div class="document-copy">
+                <span class="document-copy">
                   <strong>
-                    {{ document.file_name }}
+                    {{
+                      document.file_name
+                    }}
                   </strong>
 
-                  <span>
+                  <small>
                     {{
                       documentDescription(
                         document
                       )
                     }}
-                    · Ready
-                  </span>
-                </div>
-              </article>
+                  </small>
+                </span>
+
+                <span class="ready-dot"></span>
+              </button>
             }
           </div>
         </section>
@@ -556,87 +748,34 @@
         <details class="advanced-panel">
           <summary>
             <div>
-              <strong>
-                Advanced details
-              </strong>
+              <span class="advanced-icon">
+                <svg viewBox="0 0 24 24">
+                  <path
+                    d="
+                      M4 18V9
+                      M10 18V5
+                      M16 18v-7
+                      M22 18H2
+                    "
+                  />
+                </svg>
+              </span>
 
               <span>
-                Vector and embedding configuration
+                <strong>
+                  Advanced settings
+                </strong>
+
+                <small>
+                  Retrieval and vector details
+                </small>
               </span>
             </div>
 
-            <b>›</b>
+            <i></i>
           </summary>
 
           <div class="advanced-content">
-            <div class="detail-row">
-              <span>
-                Collection
-              </span>
-
-              <code>
-                {{
-                  state.status?.collection ??
-                  'Unavailable'
-                }}
-              </code>
-            </div>
-
-            <div class="detail-row">
-              <span>
-                Embedding model
-              </span>
-
-              <code>
-                {{
-                  state.status
-                    ?.embedding_model ??
-                  'Unavailable'
-                }}
-              </code>
-            </div>
-
-            <div class="detail-row">
-              <span>
-                Vector dimensions
-              </span>
-
-              <code>
-                {{
-                  state.status
-                    ?.embedding_dimension ??
-                  '—'
-                }}
-              </code>
-            </div>
-
-            <div class="detail-row">
-              <span>
-                Distance
-              </span>
-
-              <code>
-                {{
-                  state.status?.distance ??
-                  '—'
-                }}
-              </code>
-            </div>
-
-            <div class="detail-row">
-              <span>
-                Indexed vectors
-              </span>
-
-              <code>
-                {{
-                  state.status
-                    ?.indexed_vectors_count ??
-                  '—'
-                }}
-              </code>
-            </div>
-
             <div class="search-settings">
               <label>
                 <span>
@@ -691,6 +830,76 @@
                   </option>
                 </select>
               </label>
+            </div>
+
+            <div class="vector-details">
+              <div>
+                <span>
+                  Collection
+                </span>
+
+                <code>
+                  {{
+                    state.status?.collection ??
+                    'Unavailable'
+                  }}
+                </code>
+              </div>
+
+              <div>
+                <span>
+                  Embedding model
+                </span>
+
+                <code>
+                  {{
+                    state.status
+                      ?.embedding_model ??
+                    'Unavailable'
+                  }}
+                </code>
+              </div>
+
+              <div>
+                <span>
+                  Dimensions
+                </span>
+
+                <code>
+                  {{
+                    state.status
+                      ?.embedding_dimension ??
+                    '—'
+                  }}
+                </code>
+              </div>
+
+              <div>
+                <span>
+                  Distance
+                </span>
+
+                <code>
+                  {{
+                    state.status?.distance ??
+                    '—'
+                  }}
+                </code>
+              </div>
+
+              <div>
+                <span>
+                  Indexed vectors
+                </span>
+
+                <code>
+                  {{
+                    state.status
+                      ?.indexed_vectors_count ??
+                    '—'
+                  }}
+                </code>
+              </div>
             </div>
           </div>
         </details>

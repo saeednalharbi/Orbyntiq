@@ -2,3 +2,381 @@
   display: block;
   min-height: 100dvh;
 }
+
+/* ==========================================================
+   ORBYNTIQ PRODUCT ROUTE TRANSITION
+========================================================== */
+
+.product-transition {
+  position: fixed;
+  z-index: 10000;
+  inset: 0;
+
+  display: grid;
+  place-items: center;
+
+  overflow: hidden;
+
+  background:
+    rgba(7, 8, 11, 0.98);
+
+  opacity: 0;
+
+  pointer-events: all;
+
+  animation:
+    transition-surface-in
+    240ms ease forwards;
+}
+
+.product-transition[data-phase="revealing"] {
+  animation:
+    transition-surface-out
+    430ms
+    cubic-bezier(
+      0.22,
+      1,
+      0.36,
+      1
+    )
+    forwards;
+}
+
+.transition-light {
+  position: absolute;
+
+  width: min(70vw, 900px);
+  aspect-ratio: 1;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(102, 91, 255, 0.15),
+      rgba(76, 70, 210, 0.04) 38%,
+      transparent 70%
+    );
+
+  filter: blur(40px);
+
+  animation:
+    transition-light-breathe
+    1.3s ease-in-out infinite alternate;
+}
+
+.transition-system {
+  position: relative;
+
+  display: grid;
+
+  width: 120px;
+  height: 120px;
+
+  place-items: center;
+
+  animation:
+    transition-system-enter
+    420ms
+    cubic-bezier(
+      0.22,
+      1,
+      0.36,
+      1
+    )
+    both;
+}
+
+.product-transition[data-phase="switching"]
+.transition-system {
+  animation:
+    transition-system-switch
+    300ms
+    cubic-bezier(
+      0.4,
+      0,
+      0.2,
+      1
+    )
+    forwards;
+}
+
+.product-transition[data-phase="revealing"]
+.transition-system {
+  animation:
+    transition-system-reveal
+    420ms ease forwards;
+}
+
+.transition-core {
+  position: relative;
+  z-index: 3;
+
+  display: grid;
+
+  width: 48px;
+  height: 48px;
+
+  place-items: center;
+
+  border:
+    1px solid
+    rgba(139, 144, 255, 0.48);
+
+  border-radius: 15px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(124, 131, 255, 0.16),
+      rgba(124, 131, 255, 0.04)
+    );
+
+  box-shadow:
+    0 0 55px
+    rgba(98, 88, 255, 0.18);
+}
+
+.transition-core::before {
+  width: 14px;
+  height: 14px;
+
+  border:
+    1.5px solid #969aff;
+
+  border-radius: 50%;
+
+  content: "";
+}
+
+.transition-core span {
+  position: absolute;
+
+  width: 28px;
+  height: 9px;
+
+  border:
+    1px solid
+    rgba(150, 154, 255, 0.8);
+
+  border-radius: 50%;
+
+  transform:
+    rotate(-38deg);
+}
+
+.transition-orbit {
+  position: absolute;
+
+  border:
+    1px solid
+    rgba(137, 142, 255, 0.2);
+
+  border-radius: 50%;
+}
+
+.transition-orbit i {
+  position: absolute;
+
+  width: 4px;
+  height: 4px;
+
+  top: -2px;
+  left: 50%;
+
+  border-radius: 50%;
+
+  background: #999dff;
+
+  box-shadow:
+    0 0 9px
+    rgba(153, 157, 255, 0.75);
+}
+
+.transition-orbit--one {
+  width: 76px;
+  height: 76px;
+
+  animation:
+    transition-orbit-one
+    1.8s linear infinite;
+}
+
+.transition-orbit--two {
+  width: 112px;
+  height: 62px;
+
+  transform:
+    rotate(-38deg);
+
+  animation:
+    transition-orbit-two
+    2.4s linear infinite reverse;
+}
+
+.transition-wordmark {
+  position: absolute;
+
+  margin-top: 168px;
+
+  color:
+    rgba(224, 225, 233, 0.72);
+
+  font-size: 12px;
+  font-weight: 600;
+
+  letter-spacing: 0.07em;
+
+  opacity: 0;
+
+  animation:
+    transition-wordmark
+    450ms 120ms ease forwards;
+}
+
+.product-transition[data-phase="revealing"]
+.transition-wordmark {
+  animation:
+    transition-wordmark-out
+    220ms ease forwards;
+}
+
+@keyframes transition-surface-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes transition-surface-out {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes transition-system-enter {
+  from {
+    opacity: 0;
+
+    transform:
+      scale(0.78);
+  }
+
+  to {
+    opacity: 1;
+
+    transform:
+      scale(1);
+  }
+}
+
+@keyframes transition-system-switch {
+  from {
+    transform:
+      scale(1);
+  }
+
+  to {
+    transform:
+      scale(1.14);
+  }
+}
+
+@keyframes transition-system-reveal {
+  from {
+    opacity: 1;
+
+    transform:
+      scale(1.14);
+  }
+
+  to {
+    opacity: 0;
+
+    transform:
+      scale(1.7);
+  }
+}
+
+@keyframes transition-light-breathe {
+  from {
+    opacity: 0.45;
+
+    transform:
+      scale(0.92);
+  }
+
+  to {
+    opacity: 0.85;
+
+    transform:
+      scale(1.07);
+  }
+}
+
+@keyframes transition-orbit-one {
+  to {
+    transform:
+      rotate(360deg);
+  }
+}
+
+@keyframes transition-orbit-two {
+  from {
+    transform:
+      rotate(-38deg)
+      rotate(0deg);
+  }
+
+  to {
+    transform:
+      rotate(-38deg)
+      rotate(360deg);
+  }
+}
+
+@keyframes transition-wordmark {
+  from {
+    opacity: 0;
+
+    transform:
+      translateY(5px);
+  }
+
+  to {
+    opacity: 1;
+
+    transform:
+      translateY(0);
+  }
+}
+
+@keyframes transition-wordmark-out {
+  to {
+    opacity: 0;
+
+    transform:
+      translateY(-4px);
+  }
+}
+
+@media (
+  prefers-reduced-motion:
+  reduce
+) {
+  .product-transition,
+  .transition-system,
+  .transition-light,
+  .transition-orbit,
+  .transition-wordmark {
+    animation:
+      none !important;
+  }
+}

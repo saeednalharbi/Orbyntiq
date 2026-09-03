@@ -1,4 +1,4 @@
-﻿:host {
+:host {
   display: block;
 }
 
@@ -20,7 +20,7 @@
 .section-label {
   display: block;
   color: var(--color-text-faint);
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 650;
   letter-spacing: 0.09em;
   text-transform: uppercase;
@@ -41,7 +41,7 @@ h2 {
   gap: 6px;
   align-items: center;
   color: var(--color-text-muted);
-  font-size: 9px;
+  font-size: 11px;
 }
 
 .connection > span {
@@ -78,13 +78,13 @@ h2 {
 }
 
 .friendly-summary strong {
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .friendly-summary p {
   margin: 4px 0 0;
   color: var(--color-text-muted);
-  font-size: 10px;
+  font-size: 11px;
   line-height: 1.6;
 }
 
@@ -106,11 +106,11 @@ h2 {
 
 .summary-grid span {
   color: var(--color-text-faint);
-  font-size: 9px;
+  font-size: 11px;
 }
 
 .summary-grid strong {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
 }
 
@@ -139,7 +139,7 @@ strong[data-execution-state="running"] {
 .reason-section p {
   margin: 7px 0 0;
   color: var(--color-text-muted);
-  font-size: 10px;
+  font-size: 11px;
   line-height: 1.6;
 }
 
@@ -152,12 +152,12 @@ strong[data-execution-state="running"] {
 
 .timeline-header > span:last-child {
   color: var(--color-text-faint);
-  font-size: 9px;
+  font-size: 11px;
 }
 
 .timeline-empty {
   color: var(--color-text-faint);
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .timeline {
@@ -208,7 +208,7 @@ strong[data-execution-state="running"] {
 
 .timeline-copy strong {
   color: var(--color-text-secondary);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
 }
 
@@ -216,13 +216,13 @@ strong[data-execution-state="running"] {
   display: block;
   margin-top: 2px;
   color: var(--color-text-faint);
-  font-size: 9px;
+  font-size: 11px;
 }
 
 .timeline-copy p {
   margin: 4px 0 0;
   color: var(--color-text-muted);
-  font-size: 9px;
+  font-size: 11px;
   line-height: 1.5;
 }
 
@@ -234,7 +234,7 @@ strong[data-execution-state="running"] {
 .errors-section p {
   margin: 0;
   color: var(--color-danger);
-  font-size: 9px;
+  font-size: 11px;
 }
 
 .technical-details {
@@ -245,7 +245,7 @@ strong[data-execution-state="running"] {
   padding: 13px 18px;
   color: var(--color-text-muted);
   cursor: pointer;
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .detail-section,
@@ -264,12 +264,12 @@ strong[data-execution-state="running"] {
 .detail-row span,
 .identifier span {
   color: var(--color-text-faint);
-  font-size: 9px;
+  font-size: 11px;
 }
 
 .detail-row strong {
   color: var(--color-text-secondary);
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 550;
 }
 
@@ -285,7 +285,7 @@ strong[data-execution-state="running"] {
   border-radius: var(--radius-sm);
   background: var(--color-bg-subtle);
   color: var(--color-text-secondary);
-  font-size: 9px;
+  font-size: 11px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -311,14 +311,14 @@ strong[data-execution-state="running"] {
 }
 
 .inspector-empty strong {
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .inspector-empty p {
   max-width: 360px;
   margin: 6px 0 0;
   color: var(--color-text-muted);
-  font-size: 10px;
+  font-size: 11px;
   line-height: 1.6;
 }
 

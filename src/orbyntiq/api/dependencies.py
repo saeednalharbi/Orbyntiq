@@ -1,8 +1,10 @@
 from functools import lru_cache
 
-from fastapi import Request
+from fastapi import HTTPException, Request, status
+from pymongo.asynchronous.database import AsyncDatabase
 
 from orbyntiq.core.config import get_settings
+from orbyntiq.core.mongodb import MongoDocument
 from orbyntiq.llm import create_llm_provider
 from orbyntiq.services import (
     LLMService,
@@ -45,3 +47,29 @@ def get_multi_agent_service(
         raise MultiAgentUnavailableError("Multi-agent service is unavailable.")
 
     return service
+
+
+def get_mongodb_database(
+    request: Request,
+) -> AsyncDatabase[MongoDocument]:
+    database = getattr(
+        request.app.state,
+        "mongodb_database",
+        None,
+    )
+
+    available = bool(
+        getattr(
+            request.app.state,
+            "mongodb_available",
+            False,
+        )
+    )
+
+    if database is None or not available:
+        raise HTTPException(
+            status_code=(status.HTTP_503_SERVICE_UNAVAILABLE),
+            detail=("Execution history database is unavailable."),
+        )
+
+    return database
